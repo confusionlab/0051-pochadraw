@@ -74,10 +74,10 @@
     const wrap = $('.sheet-wrap');
     const avail = wrap.clientWidth;
     let w = avail;
-    if (window.innerWidth > 980) {
+    if (window.innerWidth > 760 || window.innerWidth > window.innerHeight) {
       const top = wrap.getBoundingClientRect().top;
-      const maxH = window.innerHeight - Math.max(0, top) - 26;
-      w = Math.min(avail, Math.max(520, maxH * 16 / 9));
+      const maxH = window.innerHeight - Math.max(0, top) - 16;
+      w = Math.min(avail, Math.max(260, maxH * 16 / 9));
     }
     sheet.style.width = Math.floor(w) + 'px';
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -160,6 +160,8 @@
       b.className = 'tool'; b.type = 'button'; b.dataset.tool = t;
       b.setAttribute('role', 'radio');
       const key = t === 'erase' ? 'E' : String(ORDER.indexOf(t) + 1);
+      b.title = `${TOOLS[t][0]}: ${TOOLS[t][1]} (${key})`;
+      b.setAttribute('aria-label', b.title);
       b.innerHTML = `<span class="stick ${t}"></span><span><b>${TOOLS[t][0]}<span class="key">${key}</span></b><small>${TOOLS[t][1]}</small></span>`;
       b.addEventListener('click', () => { Audio.unlock(); setTool(t); });
       box.appendChild(b);
@@ -697,6 +699,8 @@
   let rt = 0;
   const ro = new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(resize, 60); });
   ro.observe($('.sheet-wrap'));
+  ro.observe($('.side'));
+  ro.observe($('.top'));
   window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 60); });
 
   function start(data) {
