@@ -132,24 +132,13 @@
     if (!st.level.custom) store.set('pd-game-level', st.li);
     hideOverlay(); $('#failNote').hidden = true; $('#countdown').hidden = true;
     Audio.fan(false);
-    renderCaption(); renderTools(); syncInk(); syncGo(); syncHud();
+    renderTools(); syncInk(); syncGo(); syncHud();
     const b = $('#banner');
     b.hidden = !st.level.bossLevel;
     if (st.level.bossLevel) b.textContent = 'BOSS · ' + (st.level.boss || st.level.name);
     buildStatic();
     cv.setAttribute('aria-label', `Level ${st.level.n}: ${st.level.name}. ${st.level.story}`);
     if (!st.level.custom && st.level.n === st.world.first && !store.get('pd-game-seen-world-' + st.level.world, 0)) showWorldIntro();
-  }
-  function renderCaption() {
-    const lv = st.level;
-    $('#lvlEyebrow').textContent = lv.custom ? 'YOUR SKETCHBOOK · CUSTOM PUZZLE' : `World ${lv.world + 1}: ${st.world.name} · ${lv.n} of ${campaignCount}`;
-    $('#tagBoss').hidden = !lv.bossLevel;
-    $('#tagLive').hidden = !lv.live;
-    $('#lvlName').textContent = lv.name;
-    $('#lvlStory').textContent = lv.story.replace(/\s*\([A-Z]\)/g, '');
-    $('#lvlTip').textContent = lv.tip;
-    $('#btnPrev').disabled = lv.custom || st.li === 0;
-    $('#btnNext').disabled = lv.custom || st.li === campaignCount - 1;
   }
   function renderTools() {
     const box = $('#tools');
@@ -654,8 +643,6 @@
   $('#btnGo').addEventListener('click', go);
   $('#btnUndo').addEventListener('click', undo);
   $('#btnClear').addEventListener('click', clearAll);
-  $('#btnPrev').addEventListener('click', () => { Audio.unlock(); loadLevel(st.li - 1); });
-  $('#btnNext').addEventListener('click', () => { Audio.unlock(); loadLevel(st.li + 1); });
   const hint = () => {
     if (!st.level.solution.length) { toast('No hint recorded yet. Make your own solution!'); return; }
     if (!live() && st.mode !== 'edit') rewind();

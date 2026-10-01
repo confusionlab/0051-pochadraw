@@ -58,7 +58,7 @@ try {
   browser('open',share);browser('wait','--load','networkidle');
   assert.equal(evalJS('CCDBG.st.level.name'),'포차 ✎ café');
   assert.equal(evalJS('document.querySelector("#overlay").hidden'),true);
-  assert.equal(evalJS('document.querySelector("#btnNext").disabled'),true);
+  assert.equal(evalJS('document.querySelector("#editPuzzle").textContent'),'✎ Edit this puzzle');
   assert.equal(evalJS('CCDBG.st.level.custom'),true);
   console.log('PASS shared link opens as a playable custom puzzle');
   browser('open',new URL('editor.html',base).href);
