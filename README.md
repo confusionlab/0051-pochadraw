@@ -2,7 +2,7 @@
 
 A browser game for little drawings and big possibilities. Play 100 crayon physics puzzles, then make your own in the visual Contraption Studio.
 
-**[Play](https://confusionlab.github.io/0051-pochadraw/)** · **[Open the studio](https://confusionlab.github.io/0051-pochadraw/editor.html)**
+**[Play](https://0051-pochadraw.vercel.app/)** · **[Open the studio](https://0051-pochadraw.vercel.app/editor.html)** · [GitHub Pages mirror](https://confusionlab.github.io/0051-pochadraw/)
 
 ![Pochadraw Contraption Studio](media/studio.png)
 
@@ -43,7 +43,7 @@ node test/browser-smoke.js # browser integration checks (requires running dev se
 npm run test:cloud # cross-browser persistence, offline retry and best-star checks against this project's dev backend
 ```
 
-Vercel builds `dist/` using `npm run build:vercel`, which deploys Convex before the frontend. Set `CONVEX_DEPLOY_KEY` in Vercel's environment variables and connect the GitHub repository for automatic deploys. Keep the key server-side; it is never bundled into the frontend. `cloud.json` contains only the public backend URL used for GitHub Pages and manual static builds; change it to your own deployment when forking. Local development reads `CONVEX_URL` from `.env.local`. Planck.js and the Convex client are bundled locally. Google Fonts are optional.
+Vercel builds `dist/` using `npm run build:vercel`, which deploys Convex before the frontend. Set `CONVEX_DEPLOY_KEY` with the production backend's key in Vercel's Production environment, and the development backend's key in Preview. Connect the GitHub repository for automatic deploys. Keep keys server-side; they are never bundled into the frontend. `cloud.json` contains only the public backend URL used for GitHub Pages and manual static builds; change it to your own deployment when forking. Local development reads `CONVEX_URL` from `.env.local`. Planck.js and the Convex client are bundled locally. Google Fonts are optional.
 
 ## Editor shortcuts
 

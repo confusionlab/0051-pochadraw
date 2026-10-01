@@ -6,7 +6,6 @@ const cloud = fs.existsSync(path.join(root, 'cloud.json')) ? JSON.parse(fs.readF
 require('./tools/prepare-client')(process.env.CONVEX_URL || cloud);
 for (const folder of ['docs', 'dist']) {
   const out = path.join(root, folder);
-  fs.rmSync(out, { recursive: true, force: true });
   fs.mkdirSync(out, { recursive: true });
   for (const file of ['index.html', 'editor.html', 'LICENSE', 'THIRD_PARTY_NOTICES.md']) fs.copyFileSync(path.join(root, file), path.join(out, file));
   for (const dir of ['js', 'css', 'vendor']) fs.cpSync(path.join(root, dir), path.join(out, dir), { recursive: true });
