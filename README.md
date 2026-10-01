@@ -20,13 +20,15 @@ Draw the missing parts of a machine and press **GO**. Seven crayons have differe
 - **Test & draw** uses the original game and physics. Complete the puzzle, then keep your winning drawing as a hint. The studio replays the drawing before accepting it.
 - Export/import `.pochadraw.json` files or share a playable URL. Receivers can open the puzzle in the editor and remix it.
 
-Custom puzzles and game progress are saved in the current browser. Export JSON for portable backups. Share links contain the level itself, so no account or backend is needed. Large puzzles are better shared as JSON files. Live puzzle hint capture is replay-checked; erasing during a live run may require drawing a fresh solution to record a reproducible hint.
+Custom puzzles, drafts, drawings and campaign progress save to a shared Convex workspace. There is one workspace, with no authentication or user scoping. Browser storage caches saves offline; pending changes retry when the connection returns. Star saves keep the best score. Share links still contain the level itself. Export JSON for portable backups. Live puzzle hint capture is replay-checked; erasing during a live run may require drawing a fresh solution to record a reproducible hint.
 
 ## Run locally
 
-Requires Node.js 20 or newer. No package installation is needed to run the app.
+Requires Node.js 22 or newer.
 
 ```sh
+npm ci
+npm run backend:dev # link your own Convex project for development
 npm run dev
 ```
 
@@ -34,12 +36,14 @@ Open http://localhost:8851 for the game, or http://localhost:8851/editor.html fo
 
 ```sh
 npm run check   # JavaScript syntax
+npm run typecheck # Convex TypeScript
 npm test        # level format, sharing, crayon physics, all 100 campaign answers
 npm run build   # static site in docs/ and dist/
 node test/browser-smoke.js # browser integration checks (requires running dev server)
+npm run test:cloud # cross-browser persistence, offline retry and best-star checks against this project's dev backend
 ```
 
-Publish `docs/` with GitHub Pages, or serve `dist/` with any static web host. Planck.js is bundled locally. Google Fonts are optional; system fallbacks keep the game usable without that service.
+Vercel builds `dist/` using `npm run build:vercel`, which deploys Convex before the frontend. Set `CONVEX_DEPLOY_KEY` in Vercel's environment variables and connect the GitHub repository for automatic deploys. Keep the key server-side; it is never bundled into the frontend. `cloud.json` contains only the public backend URL used for GitHub Pages and manual static builds; change it to your own deployment when forking. Local development reads `CONVEX_URL` from `.env.local`. Planck.js and the Convex client are bundled locally. Google Fonts are optional.
 
 ## Editor shortcuts
 
@@ -61,6 +65,8 @@ The editor supports mouse, pen and touch. On a phone, landscape gives the drawin
 - `index.html`, `js/app.js`: original campaign plus custom puzzle play and editor integration.
 - `editor.html`, `css/editor.css`, `js/editor.js`: visual studio and playtest UI.
 - `js/level-kit.js`: validation, level geometry, share encoding and browser storage helpers.
+- `convex/schema.ts`, `convex/workspace.ts`: the shared puzzle library, draft, progress, drawings and preferences.
+- `tools/cloud-client.js`: cloud hydration, realtime sketchbook updates, browser migration and offline save queue.
 - `js/sim.js`, `js/crayon.js`, `js/draw.js`, `js/audio.js`: physics, crayon rendering and sound.
 - `js/levels.js`: the original 100 campaign puzzles and their known solutions.
 - `tools/`: original campaign generation tools. Change campaign recipes in `tools/plan.js`, `tools/hand.js` or `tools/archetypes.js`, then run `node tools/gen.js`.

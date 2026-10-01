@@ -18,6 +18,7 @@
     <a class="wordmark" href="index.html" aria-label="Pochadraw — play"><span class="brand-mark">p.</span>pocha<span>draw</span></a>
     <nav class="mode-nav" aria-label="App mode"><a href="index.html">Play puzzles <span>100</span></a><a href="editor.html" aria-current="page">Make a puzzle <span>✎</span></a></nav>
     <button class="button small" id="openLibrary">My sketchbook <span id="savedCount">0</span></button>
+    <span class="micro" data-cloud-status role="status">Connecting…</span>
   </header>
   <section class="studio-intro">
     <div><p class="eyebrow">THE CONTRAPTION STUDIO</p><h1>Little drawings.<br><em>Big possibilities.</em></h1></div>
@@ -59,7 +60,7 @@
 </div>
 <div id="notification" class="notification" role="status" aria-live="polite" hidden></div>
 <input type="file" id="fileInput" accept=".json,application/json" hidden>
-<dialog id="libraryDialog" class="modal"><div class="modal-heading"><div><p class="eyebrow">YOUR COLLECTION</p><h2>My sketchbook</h2></div><button class="icon-button" data-close aria-label="Close sketchbook">×</button></div><p class="micro">Saved in this browser. Export a file to keep a copy elsewhere.</p><div id="libraryList" class="library-list"></div></dialog>
+<dialog id="libraryDialog" class="modal"><div class="modal-heading"><div><p class="eyebrow">YOUR COLLECTION</p><h2>My sketchbook</h2></div><button class="icon-button" data-close aria-label="Close sketchbook">×</button></div><p class="micro" data-cloud-status role="status">Connecting…</p><div id="libraryList" class="library-list"></div></dialog>
 <dialog id="remixDialog" class="modal wide"><div class="modal-heading"><div><p class="eyebrow">A LITTLE HEAD START</p><h2>Make it your own.</h2></div><button class="icon-button" data-close aria-label="Close level picker">×</button></div><label class="field">Choose a world<select id="worldFilter"></select></label><div id="remixList" class="remix-grid"></div></dialog>
 <dialog id="shareDialog" class="modal"><div class="modal-heading"><div><p class="eyebrow">PASS THE PAPER</p><h2>Share your puzzle.</h2></div><button class="icon-button" data-close aria-label="Close share link">×</button></div><p>Anyone with the link can play your puzzle and remix it. The whole level travels in the link.</p><label class="field">Playable link<textarea id="shareUrl" rows="4" readonly></textarea></label><div class="modal-actions"><button class="button ink" id="copyShare">Copy link</button><a class="button" id="openShare" target="_blank" rel="noopener">Open puzzle ↗</a></div><p class="micro">For large puzzles, a JSON file is easier to share.</p></dialog>
 <dialog id="testDialog" class="test-modal"><div class="preview-heading"><div><p class="eyebrow">PLAYTEST</p><strong id="testTitle"></strong></div><span id="testStatus">Draw your solution, then press GO.</span><button class="button" id="recordHint" hidden>Keep this solution as a hint</button><button class="button ink" id="backToEditor">← Back to editing</button></div><iframe id="playFrame" title="Playtest your contraption"></iframe></dialog>
@@ -69,6 +70,8 @@
 <script src="js/crayon.js"></script>
 <script src="js/draw.js"></script>
 <script src="js/level-kit.js"></script>
+<script src="js/cloud-config.js"></script>
+<script src="vendor/convex-client.js"></script>
 <script src="js/editor.js"></script>
 </body>
 </html>

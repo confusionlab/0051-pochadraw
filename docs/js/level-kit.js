@@ -106,6 +106,6 @@
     catch (e) { throw new Error('This shared level link is invalid. ' + e.message); }
   }
   function read(key, fallback) { try { return JSON.parse(localStorage.getItem('pochadraw-' + key)) ?? fallback; } catch (e) { return fallback; } }
-  function write(key, value) { localStorage.setItem('pochadraw-' + key, JSON.stringify(value)); }
+  function write(key, value) { localStorage.setItem('pochadraw-' + key, JSON.stringify(value)); CC.Cloud?.write('pochadraw-' + key, value); }
   CC.LevelKit = { clone, uid, crayons, papers, validate, remix, blank, bounds, move, encode, decode, read, write };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -1,7 +1,9 @@
-/* Pochadraw — dependency-free static site build for GitHub Pages. */
+/* Pochadraw — static frontend with a bundled Convex client. */
 const fs = require('node:fs');
 const path = require('node:path');
 const root = __dirname;
+const cloud = fs.existsSync(path.join(root, 'cloud.json')) ? JSON.parse(fs.readFileSync(path.join(root, 'cloud.json'), 'utf8')).url : '';
+require('./tools/prepare-client')(process.env.CONVEX_URL || cloud);
 for (const folder of ['docs', 'dist']) {
   const out = path.join(root, folder);
   fs.rmSync(out, { recursive: true, force: true });

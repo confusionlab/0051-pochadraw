@@ -1,7 +1,8 @@
 /* Crayon Contraptions — the app: input, loop, screens. */
-(function () {
+(async function () {
   'use strict';
   const CC = window.CC;
+  await CC.Cloud?.ready;
   const { Sim, geom, LEVELS, WORLDS, PAL, Crayon, Draw, Audio } = CC;
   const { DT } = CC.K;
   const campaignCount = LEVELS.length;
@@ -24,7 +25,7 @@
 
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage is a convenience */ } }
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage is a convenience */ } CC.Cloud?.write(k, v); }
   };
 
   const st = {
@@ -63,6 +64,9 @@
   }
   function totalStars() { return LEVELS.filter(l => !l.custom).reduce((a, l) => a + (st.progress[l.id] || 0), 0); }
   function syncTotal() { $('#totalStars').innerHTML = `&#9733; ${totalStars()} / ${campaignCount * 3}`; }
+  window.addEventListener('pochadraw:cloud', ({ detail }) => {
+    if (detail.key === 'progress') { st.progress = detail.value; syncTotal(); }
+  });
 
   /* ---------- sizing & the cached background ---------- */
   function resize() {

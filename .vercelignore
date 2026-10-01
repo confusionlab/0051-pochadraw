@@ -1,0 +1,7 @@
+docs
+dist
+shots
+test
+media
+.env*
+.git

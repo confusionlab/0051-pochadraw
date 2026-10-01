@@ -1,6 +1,7 @@
 /* Pochadraw — the visual contraption studio. */
-(function () {
+(async function () {
   'use strict';
+  await window.CC.Cloud?.ready;
   const { Sim, Draw, Crayon, LEVELS, WORLDS, geom, LevelKit: Kit } = window.CC;
   const $ = s => document.querySelector(s);
   const cv = $('#editorCanvas'), ctx = cv.getContext('2d'), cr = new Crayon(ctx);
@@ -35,6 +36,12 @@
   let sketchbook = Kit.read('library', []);
   if (!Array.isArray(sketchbook)) sketchbook = [];
   try { sketchbook = sketchbook.map(l => Kit.validate(l)).slice(0, 100); } catch (e) { sketchbook = []; }
+  window.addEventListener('pochadraw:cloud', ({ detail }) => {
+    if (detail.key === 'library') {
+      try { sketchbook = detail.value.map(l => Kit.validate(l)); $('#savedCount').textContent = sketchbook.length; if ($('#libraryDialog').open) library(); }
+      catch (e) { notify('A cloud puzzle could not be opened.'); }
+    }
+  });
   const snapshot = () => ({ level: Kit.clone(level), selected });
   const notify = message => { $('#notification').textContent = message; $('#notification').hidden = false; clearTimeout(noteTimer); noteTimer = setTimeout(() => $('#notification').hidden = true, 3800); };
   function saveDraft() {

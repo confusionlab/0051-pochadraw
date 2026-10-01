@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build:vercel",
+  "outputDirectory": "dist",
+  "installCommand": "npm ci",
+  "headers": [
+    { "source": "/js/cloud-config.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+  ]
+}

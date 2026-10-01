@@ -6,8 +6,20 @@
   "scripts": {
     "dev": "node dev-server.js 8851",
     "build": "node build.js",
+    "build:vercel": "convex deploy --cmd 'npm run build' --cmd-url-env-var-name CONVEX_URL",
+    "backend:dev": "convex dev",
+    "typecheck": "tsc --noEmit",
+    "test:cloud": "node test/cloud-smoke.js",
     "test": "node --test test/editor.test.js && node test/crayons.js && node test/verify.js",
     "check": "node tools/syntax.js"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "convex": "^1.46.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
 }

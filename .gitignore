@@ -8,7 +8,13 @@ tools/cache/
 # local editor/agent config
 .claude/
 node_modules/
+.env*
+vendor/convex-client.js
+js/cloud-config.js
 .DS_Store
 Thumbs.db
 # full demo video lives on the GitHub release, not in git
 media/demo.mp4
+.vercel
+
+.env.local
