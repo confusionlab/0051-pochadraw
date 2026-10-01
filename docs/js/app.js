@@ -142,17 +142,7 @@
     $('#tagBoss').hidden = !lv.bossLevel;
     $('#tagLive').hidden = !lv.live;
     $('#lvlName').textContent = lv.name;
-    const youLetters = new Set(lv.parts.filter(p => p.type === 'label' && p.you).map(p => p.text));
-    const story = $('#lvlStory');
-    story.textContent = '';
-    lv.story.split(/\(([A-Z])\)/).forEach((chunk, i) => {
-      if (i % 2) {
-        const b = document.createElement('b');
-        b.className = 'lt' + (youLetters.has(chunk) ? ' you' : '');
-        b.textContent = chunk;
-        story.appendChild(b);
-      } else story.appendChild(document.createTextNode(chunk));
-    });
+    $('#lvlStory').textContent = lv.story.replace(/\s*\([A-Z]\)/g, '');
     $('#lvlTip').textContent = lv.tip;
     $('#btnPrev').disabled = lv.custom || st.li === 0;
     $('#btnNext').disabled = lv.custom || st.li === campaignCount - 1;
@@ -562,7 +552,7 @@
       <p class="verb" style="font-size:clamp(34px,5vw,54px);color:var(--navy)">How to play</p>
       <div class="howto">
         <div><span class="n">1</span><b>Draw</b><p>Fill the gaps in the machine with crayon. Every colour has its own physics: blue stays put, orange falls, green bounces, and more to find.</p></div>
-        <div><span class="n">2</span><b>Press GO</b><p>Every part runs in order, like the letters in the caption. Live levels start by themselves, so draw while they run.</p></div>
+        <div><span class="n">2</span><b>Press GO</b><p>Watch your contraption go. Live levels start by themselves, so draw while they run.</p></div>
         <div><span class="n">3</span><b>Tinker</b><p>Missed? Rewind, nudge a line, try again. The eraser rubs out just the bit under it. Every tenth level is a boss.</p></div>
       </div>
       <p style="color:var(--muted)">Keys: Space runs or rewinds, 1 to 7 pick a crayon, E erases, Z undoes, H shows a hint.</p>
@@ -594,8 +584,6 @@
     for (const p of sim.parts) if (p.type === 'lava') Draw.R.lava.live(g, p, sim);
     Draw.strokes(g, sim, null, live() ? st.level.live.fade : 0);
     for (const p of sim.parts) { if (p.type === 'lava') continue; const R = Draw.R[p.type]; if (R && R.live) R.live(g, p, sim); }
-    const la = st.mode === 'edit' || st.mode === 'ready' ? 1 : Math.max(0, 1 - (now - st.runStart) / 600);
-    Draw.labels(g, sim, la);
     if (st.drawing) {
       const d = st.drawing;
       Draw.strokeArt(g, { kind: d.kind, pts: d.raw.length > 1 ? d.raw : [d.raw[0]] }, null, 1, 7, g.t);

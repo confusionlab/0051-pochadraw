@@ -23,12 +23,12 @@
     ['lava', 'Lava', '<path d="m3 20 5-8 6 6 6-11 6 13 8-9 4 17H3Z" fill="#e89a62"/><path d="m8 24 6-4 6 4 6-3 7 3"/>', p => ({ type: 'lava', x: p[0]-1, y: p[1], w: 2, h: .4 })]
   ];
   const fields = {
-    ball: ['x','y','r','style','hold','label'], plank: ['x1','y1','x2','y2','t','label'], gate: ['x1','y1','x2','y2','t','id','when'],
-    cup: ['x','y','w','h','back','backH','label'], block: ['x','y','w','h','text'], bell: ['x','y','size','label'],
-    dominoes: ['x','y','n','gap','h','label'], seesaw: ['x','y','len','angle','baseY','label'], pusher: ['x','y','dir','reach','speed','when','label'],
-    balloon: ['x','y','r','label'], crate: ['x','y','w','h','angle'], trampoline: ['x','y','w','bounce','angle'], fan: ['x','y','dir','power','reach','on','label'],
-    note: ['x','y','text','size','rot'], label: ['x','y','text','you'], lava: ['x','y','w','h'], car: ['x','y','dir','speed','when','label'],
-    button: ['x','y','w','angle','id','fires','label'], cannon: ['x','y','angle','speed','when','label'], star: ['x','y','r','label']
+    ball: ['x','y','r','style','hold'], plank: ['x1','y1','x2','y2','t'], gate: ['x1','y1','x2','y2','t','id','when'],
+    cup: ['x','y','w','h','back','backH'], block: ['x','y','w','h','text'], bell: ['x','y','size'],
+    dominoes: ['x','y','n','gap','h'], seesaw: ['x','y','len','angle','baseY'], pusher: ['x','y','dir','reach','speed','when'],
+    balloon: ['x','y','r'], crate: ['x','y','w','h','angle'], trampoline: ['x','y','w','bounce','angle'], fan: ['x','y','dir','power','reach','on'],
+    note: ['x','y','text','size','rot'], label: ['x','y','text','you'], lava: ['x','y','w','h'], car: ['x','y','dir','speed','when'],
+    button: ['x','y','w','angle','id','fires'], cannon: ['x','y','angle','speed','when'], star: ['x','y','r']
   };
   const labels = { x:'X position', y:'Y position', x1:'Start X', y1:'Start Y', x2:'End X', y2:'End Y', r:'Radius', w:'Width', h:'Height', t:'Thickness', len:'Length', n:'Count', baseY:'Base Y', bounce:'Bounciness', angle:'Angle (degrees)', rot:'Text angle (degrees)', gap:'Spacing', style:'Material', hold:'Release', when:'Triggered by', back:'Tall side', backH:'Side height', on:'Always on', you:'Player label', text:'Text', size:'Size', label:'Caption letter', id:'Mechanism ID', fires:'Activates IDs', dir:'Direction', power:'Power', speed:'Speed', reach:'Reach' };
   let level, selected = -1, tool = 'select', history = [], future = [], sim, drag = null, noteTimer, draftTimer, capture = null;
@@ -89,7 +89,6 @@
     Draw.paper(g, lv.paper || (WORLDS[lv.world] || {}).paper || 'graph'); Draw.floor(g);
     for (const p of world.parts) { const r = Draw.R[p.type]; if (r && r.stat) r.stat(g, p, world); }
     for (const p of world.parts) { const r = Draw.R[p.type]; if (r && r.live) r.live(g, p, world); }
-    Draw.labels(g, world, 1);
     if (hint && lv.solution.length) Draw.ghost(g, lv.solution, .6);
     if (selectedIndex >= 0 && lv.parts[selectedIndex]) {
       const p = lv.parts[selectedIndex], box = Kit.bounds(p), pad = .12;

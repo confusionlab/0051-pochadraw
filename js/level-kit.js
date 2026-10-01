@@ -16,7 +16,7 @@
       if (typeof v === 'number' && (!Number.isFinite(v) || Math.abs(v) > 10000)) throw new Error('A level value is outside the supported range.');
       return v;
     });
-    for (const [key, fallback, max] of [['name', 'Untitled contraption', 80], ['story', 'Draw a path to complete the machine.', 600], ['tip', 'Try a ramp, a bridge, or a different crayon.', 300], ['verb', 'HOORAY!', 30]]) {
+    for (const [key, fallback, max] of [['name', 'Untitled contraption', 80], ['story', 'Complete the contraption', 600], ['tip', 'Try a ramp, a bridge, or a different crayon.', 300], ['verb', 'HOORAY!', 30]]) {
       lv[key] = typeof lv[key] === 'string' ? lv[key].slice(0, max) : fallback;
     }
     if (!Array.isArray(lv.parts) || lv.parts.length > 120) throw new Error('A level needs an object list with at most 120 objects.');
@@ -67,7 +67,7 @@
   }
   const remix = lv => validate(Object.assign(clone(lv), { id: uid(), name: lv.name + ' (remix)', custom: true, paper: (CC.WORLDS[lv.world] || {}).paper || 'graph' }));
   function blank() {
-    return validate({ id: uid(), name: 'My first contraption', story: 'Help the little red ball find its way into the basket.', tip: 'Draw a ramp from the shelf toward the basket.', verb: 'SWISH!', crayons: crayons.slice(), ink: 30, par: [15, 22.5], solution: [], parts: [
+    return validate({ id: uid(), name: 'My first contraption', story: 'Ball into the basket', tip: 'Draw a ramp from the shelf toward the basket.', verb: 'SWISH!', crayons: crayons.slice(), ink: 30, par: [15, 22.5], solution: [], parts: [
       { type: 'ball', x: 2, y: 2.2, style: 'rubber', hold: 'start' },
       { type: 'plank', x1: 0.4, y1: 2.5, x2: 3.5, y2: 3.1, t: 0.2 },
       { type: 'cup', x: 12.5, y: 7.8, w: 1.8, h: 1.1, style: 'basket' }
