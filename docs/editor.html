@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5efe2">
+<title>Pochadraw — Contraption Studio</title>
+<meta name="description" content="Make your own crayon physics puzzles. Remix 100 contraptions, draw a solution, and share your creation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Patrick+Hand&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/editor.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='m3 29 4-12L24 0l8 8-17 17Z' fill='%23db5140'/%3E%3C/svg%3E">
+</head>
+<body>
+<div class="studio">
+  <header class="studio-header">
+    <a class="wordmark" href="index.html" aria-label="Pochadraw — play"><span class="brand-mark">p.</span>pocha<span>draw</span></a>
+    <nav class="mode-nav" aria-label="App mode"><a href="index.html">Play puzzles <span>100</span></a><a href="editor.html" aria-current="page">Make a puzzle <span>✎</span></a></nav>
+    <button class="button small" id="openLibrary">My sketchbook <span id="savedCount">0</span></button>
+  </header>
+  <section class="studio-intro">
+    <div><p class="eyebrow">THE CONTRAPTION STUDIO</p><h1>Little drawings.<br><em>Big possibilities.</em></h1></div>
+    <p>Put a ball here. A basket there.<br>Leave a little room for imagination.</p>
+    <span class="intro-doodle" aria-hidden="true">↝<span>your idea goes here</span></span>
+  </section>
+  <div class="document-bar">
+    <div class="document-name"><span class="doc-icon" aria-hidden="true">▤</span><input id="levelName" maxlength="80" aria-label="Level name" placeholder="Name your contraption"><span class="saved-state" id="saveState">Draft saved</span></div>
+    <div class="document-actions"><button class="button" id="newLevel">＋ New</button><button class="button" id="remixLevel">Remix a level</button><button class="button ink" id="saveLevel">Save to sketchbook</button></div>
+  </div>
+  <main class="workbench">
+    <aside class="palette panel" aria-label="Object palette">
+      <div class="panel-heading"><h2>The toy box</h2><span>01</span></div>
+      <p class="micro">Choose a toy, then click the paper.</p>
+      <button class="select-tool" id="selectTool" aria-pressed="true"><span>↖</span> Select &amp; move <kbd>V</kbd></button>
+      <div class="palette-grid" id="palette"></div>
+      <div class="palette-note"><span aria-hidden="true">✦</span><p>Players draw the missing pieces. You build the puzzle.</p></div>
+    </aside>
+    <section class="stage-column" aria-label="Level canvas">
+      <div class="canvas-toolbar"><div><button class="icon-button" id="undoEdit" title="Undo (Ctrl/Cmd Z)" aria-label="Undo">↶</button><button class="icon-button" id="redoEdit" title="Redo (Ctrl/Cmd Shift Z)" aria-label="Redo">↷</button><span class="toolbar-rule"></span><label class="toggle"><input type="checkbox" id="snapGrid" checked> Snap to grid</label></div><label class="toggle"><input type="checkbox" id="showHint"> Show hint</label></div>
+      <div class="canvas-paper"><span class="paper-tab">YOUR LITTLE WORLD</span><canvas id="editorCanvas" width="1600" height="900" tabindex="0" aria-label="Level editor canvas. Select objects to move them. Arrow keys nudge, Delete removes, Ctrl or Command D duplicates."></canvas><span class="canvas-coordinates" id="coordinates">16 × 9 playground</span></div>
+      <div class="stage-caption"><span id="toolInstruction">Select a toy to move it. Drag the blue handles to resize a platform.</span><span id="objectCount">3 objects</span></div>
+      <div class="test-strip"><div><span class="test-star" aria-hidden="true">✶</span><div><strong>Will your invention work?</strong><p id="solutionState">Play it, solve it, turn your drawing into a hint.</p></div></div><button class="button test-button" id="testLevel">▶ Test &amp; draw</button></div>
+      <div class="bottom-actions"><button class="text-button" id="importLevel">↑ Import JSON</button><button class="text-button" id="exportLevel">↓ Export JSON</button><span></span><button class="text-button" id="shareLevel">↗ Share puzzle</button></div>
+    </section>
+    <aside class="inspector panel" aria-label="Object and puzzle settings">
+      <div class="panel-heading"><h2>The little details</h2><span>02</span></div>
+      <div id="objectInspector"><div class="empty-inspector"><span aria-hidden="true">↖</span><strong>Pick something on the paper.</strong><p>Move it, give it a little nudge, or make it your own.</p></div></div>
+      <details class="puzzle-settings" open><summary>Puzzle settings</summary>
+        <label class="field">The challenge<textarea id="levelStory" maxlength="600" rows="2"></textarea></label>
+        <label class="field">A little tip<textarea id="levelTip" maxlength="300" rows="2"></textarea></label>
+        <div class="field-row"><label class="field">Ink budget<input id="levelInk" type="number" min="0.3" max="500" step="0.5"></label><label class="field">Paper<select id="levelPaper"><option value="graph">Graph paper</option><option value="ruled">Notebook</option><option value="dots">Dotted</option><option value="sky">Blue sky</option><option value="blueprint">Blueprint</option><option value="party">Confetti</option><option value="kraft">Kraft paper</option><option value="legal">Legal pad</option><option value="pink">Pink paper</option><option value="newsprint">Newsprint</option></select></label></div>
+        <p class="field-label">Crayons players can use</p><div class="crayon-options" id="crayonOptions"></div>
+        <p class="micro" id="liveNote" hidden>This is a live puzzle. Its original timer and mechanisms are preserved.</p>
+      </details>
+    </aside>
+  </main>
+  <footer class="studio-footer"><span>Made for curious minds &amp; messy drawings.</span><a href="https://github.com/confusionlab/0051-pochadraw" target="_blank" rel="noopener">Open source · Built on Crayon Contraptions ↗</a></footer>
+</div>
+<div id="notification" class="notification" role="status" aria-live="polite" hidden></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<dialog id="libraryDialog" class="modal"><div class="modal-heading"><div><p class="eyebrow">YOUR COLLECTION</p><h2>My sketchbook</h2></div><button class="icon-button" data-close aria-label="Close sketchbook">×</button></div><p class="micro">Saved in this browser. Export a file to keep a copy elsewhere.</p><div id="libraryList" class="library-list"></div></dialog>
+<dialog id="remixDialog" class="modal wide"><div class="modal-heading"><div><p class="eyebrow">A LITTLE HEAD START</p><h2>Make it your own.</h2></div><button class="icon-button" data-close aria-label="Close level picker">×</button></div><label class="field">Choose a world<select id="worldFilter"></select></label><div id="remixList" class="remix-grid"></div></dialog>
+<dialog id="shareDialog" class="modal"><div class="modal-heading"><div><p class="eyebrow">PASS THE PAPER</p><h2>Share your puzzle.</h2></div><button class="icon-button" data-close aria-label="Close share link">×</button></div><p>Anyone with the link can play your puzzle and remix it. The whole level travels in the link.</p><label class="field">Playable link<textarea id="shareUrl" rows="4" readonly></textarea></label><div class="modal-actions"><button class="button ink" id="copyShare">Copy link</button><a class="button" id="openShare" target="_blank" rel="noopener">Open puzzle ↗</a></div><p class="micro">For large puzzles, a JSON file is easier to share.</p></dialog>
+<dialog id="testDialog" class="test-modal"><div class="preview-heading"><div><p class="eyebrow">PLAYTEST</p><strong id="testTitle"></strong></div><span id="testStatus">Draw your solution, then press GO.</span><button class="button" id="recordHint" hidden>Keep this solution as a hint</button><button class="button ink" id="backToEditor">← Back to editing</button></div><iframe id="playFrame" title="Playtest your contraption"></iframe></dialog>
+<script src="vendor/planck-1.4.2.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/crayon.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/level-kit.js"></script>
+<script src="js/editor.js"></script>
+</body>
+</html>

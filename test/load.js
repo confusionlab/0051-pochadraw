@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports = function load(extra) {
-  const ctx = { console, Math, Date, setTimeout };
+  const ctx = { console, Math, Date, setTimeout, TextEncoder, TextDecoder, atob, btoa };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
   const run = f => vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), ctx, { filename: f });

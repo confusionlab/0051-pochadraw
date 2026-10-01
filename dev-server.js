@@ -31,7 +31,7 @@ http.createServer((req, res) => {
   let url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/') url = '/index.html';
   const file = path.normalize(path.join(root, url));
-  if (!file.startsWith(root)) { res.writeHead(403); res.end(); return; }
+  if (file !== root && !file.startsWith(root + path.sep)) { res.writeHead(403); res.end(); return; }
   fs.readFile(file, (err, buf) => {
     if (err) { res.writeHead(404, { 'Content-Type': 'text/plain' }); res.end('Not found'); return; }
     let body = buf;
@@ -39,4 +39,4 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': types[path.extname(file).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     res.end(body);
   });
-}).listen(port, '127.0.0.1', () => console.log(`Crayon Contraptions -> http://localhost:${port}`));
+}).listen(port, '127.0.0.1', () => console.log(`Pochadraw -> http://localhost:${port}`));
