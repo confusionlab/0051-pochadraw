@@ -274,11 +274,6 @@
   .lvl .ln b { font-family: var(--font-sketch); font-weight: 700; font-size: 20px; }
   .lvl .st { color: #B07A12; letter-spacing: 0.05em; white-space: nowrap; }
   .lvl .st .off { color: #D8D0BE; }
-  .howto { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 14px 0 6px; text-align: left; }
-  .howto div { display: grid; gap: 4px; }
-  .howto b { font-family: var(--font-sketch); font-weight: 700; font-size: 24px; }
-  .howto .n { display: inline-grid; place-items: center; width: 34px; height: 34px; border: 2px solid var(--graphite); border-radius: 50% 46% 52% 48%; font-family: var(--font-sketch); font-weight: 700; font-size: 20px; }
-  .howto p { margin: 0; font-size: 17px; }
 
   /* ---------- narrow screens ---------- */
   @media (max-width: 760px) {
@@ -302,7 +297,6 @@
     .tool small { display: none; }
     .level-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .hud span { font-size: 14px; padding: 0 6px; }
-    .howto { grid-template-columns: minmax(0, 1fr); }
     .caption h2 { font-size: 24px; }
     .sheet { transform: none; }
   }
@@ -329,7 +323,6 @@
       <a class="chip" href="editor.html?library=1">My sketchbook</a>
       <span class="chip" id="totalStars" aria-label="Stars collected" style="cursor:default;color:#8A5A0A">&#9733; 0 / 300</span>
       <button class="chip" id="btnLevels" type="button">Levels</button>
-      <button class="chip" id="btnHelp" type="button">How to play</button>
       <button class="chip" id="btnSound" type="button" aria-pressed="true">Sound</button>
       <span data-cloud-status role="status" style="align-self:center;font-size:14px">Connecting…</span>
     </div>

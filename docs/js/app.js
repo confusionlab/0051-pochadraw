@@ -523,7 +523,6 @@
     else if (a === 'tinker') { hideOverlay(); rewind(); }
     else if (a === 'levels') showLevels();
     else if (a === 'close') hideOverlay();
-    else if (a === 'play') { hideOverlay(); store.set('pd-game-seen-help', 1); }
     else if (a === 'intro') { hideOverlay(); store.set('pd-game-seen-world-' + st.level.world, 1); }
     else if (a === 'pick') loadLevel(Number(b.dataset.i));
     else if (a === 'world') showLevels(Number(b.dataset.w));
@@ -552,18 +551,6 @@
       for (const p of sim.parts) { const R = Draw.R[p.type]; if (R && R.live) R.live(g, p, sim); }
       Draw.strokes(g, sim, null);
     });
-  }
-  function showHelp() {
-    showOverlay(`<div class="panel card" role="dialog" aria-label="How to play">
-      <p class="verb" style="font-size:clamp(34px,5vw,54px);color:var(--navy)">How to play</p>
-      <div class="howto">
-        <div><span class="n">1</span><b>Draw</b><p>Fill the gaps in the machine with crayon. Every colour has its own physics: blue stays put, orange falls, green bounces, and more to find.</p></div>
-        <div><span class="n">2</span><b>Press GO</b><p>Watch your contraption go. Live levels start by themselves, so draw while they run.</p></div>
-        <div><span class="n">3</span><b>Tinker</b><p>Missed? Rewind, nudge a line, try again. The eraser rubs out just the bit under it. Every tenth level is a boss.</p></div>
-      </div>
-      <p style="color:var(--muted)">Keys: Space runs or rewinds, 1 to 7 pick a crayon, E erases, Z undoes, H shows a hint.</p>
-      <div class="row"><button class="chip primary" data-act="play" type="button">Start drawing</button></div>
-    </div>`);
   }
   function showWorldIntro() {
     const w = st.world, t = w.crayon;
@@ -680,7 +667,6 @@
   $('#btnFailHint').addEventListener('click', hint);
   $('#btnFailRewind').addEventListener('click', () => { if (live()) restart(); else rewind(); });
   $('#btnLevels').addEventListener('click', () => { Audio.unlock(); showLevels(); });
-  $('#btnHelp').addEventListener('click', () => { Audio.unlock(); showHelp(); });
   const snd = $('#btnSound');
   function syncSound() { snd.setAttribute('aria-pressed', String(!Audio.muted)); snd.textContent = Audio.muted ? 'Sound off' : 'Sound on'; }
   snd.addEventListener('click', () => { Audio.unlock(); Audio.setMuted(!Audio.muted); store.set('pd-game-muted', Audio.muted); syncSound(); });
@@ -719,7 +705,6 @@
     if (document.fonts && document.fonts.load) {
       Promise.all([document.fonts.load('700 30px "Cabin Sketch"'), document.fonts.load('30px "Patrick Hand"')]).then(() => { CC.clearSprites(); cr.pats.clear(); buildStatic(); }).catch(() => {});
     }
-    if (!shared && !preview && !store.get('pd-game-seen-help', 0) && !(data && data.li != null) && $('#overlay').hidden) showHelp();
     requestAnimationFrame(frame);
   }
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ li: st.li, strokes: st.strokes })); } catch (e) { /* optional */ }
