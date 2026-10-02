@@ -7,7 +7,9 @@
   const { DT } = CC.K;
   const campaignCount = LEVELS.length;
   const escapeHTML = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-  const preview = new URLSearchParams(location.search).has('preview');
+  const playParams = new URLSearchParams(location.search);
+  const preview = playParams.has('preview');
+  const returnTab = ['studio', 'levels'].includes(playParams.get('from')) ? playParams.get('from') : null;
   if (preview) document.body.classList.add('preview');
   const S = 100;
   const $ = s => document.querySelector(s);
@@ -120,7 +122,12 @@
     st.level = LEVELS[st.li];
     st.world = WORLDS[st.level.world] || WORLDS[0];
     if (st.level.custom) st.world = { ...st.world, paper: st.level.paper || st.world.paper };
-    $('#btnLevels').href = 'editor.html?tab=levels&world=' + (st.level.world || 0);
+    const home = new URL('editor.html', location.href);
+    const tab = returnTab || (st.level.custom ? 'studio' : 'levels');
+    home.searchParams.set('tab', tab);
+    if (tab === 'levels') home.searchParams.set('world', st.level.world || 0);
+    if (preview) home.searchParams.set('preview', '1');
+    $('#btnLevels').href = home.href;
     if (!st.level.crayons.includes(st.tool)) st.tool = st.level.crayons[0];
     st.fx = []; st.confetti = []; st.hintUntil = 0; st.fails = 0;
     newSim();
@@ -514,8 +521,9 @@
     else if (a === 'world') showLevels(Number(b.dataset.w));
   });
   function showLevels(wi) {
-    const world = wi != null ? wi : st.level.world;
-    location.href = 'editor.html?tab=levels&world=' + world;
+    const home = new URL($('#btnLevels').href);
+    if (wi != null && home.searchParams.get('tab') === 'levels') home.searchParams.set('world', wi);
+    location.href = home.href;
   }
   function showWorldIntro() {
     const w = st.world, t = w.crayon;

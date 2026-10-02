@@ -32,7 +32,7 @@
     button: ['x','y','w','angle','id','fires'], cannon: ['x','y','angle','speed','when'], star: ['x','y','r']
   };
   const labels = { x:'X position', y:'Y position', x1:'Start X', y1:'Start Y', x2:'End X', y2:'End Y', r:'Radius', w:'Width', h:'Height', t:'Thickness', len:'Length', n:'Count', baseY:'Base Y', bounce:'Bounciness', angle:'Angle (degrees)', rot:'Text angle (degrees)', gap:'Spacing', style:'Material', hold:'Release', when:'Triggered by', back:'Tall side', backH:'Side height', on:'Always on', you:'Player label', text:'Text', size:'Size', label:'Caption letter', id:'Mechanism ID', fires:'Activates IDs', dir:'Direction', power:'Power', speed:'Speed', reach:'Reach' };
-  let level, selected = -1, tool = 'select', history = [], future = [], sim, drag = null, noteTimer, draftTimer, capture = null, libraryObserver;
+  let level, selected = -1, tool = 'select', history = [], future = [], sim, drag = null, noteTimer, draftTimer, capture = null, libraryObserver, homeTab = 'studio';
   let sketchbook = Kit.read('library', []);
   if (!Array.isArray(sketchbook)) sketchbook = [];
   try { sketchbook = sketchbook.map(l => Kit.validate(l)).slice(0, 100); } catch (e) { sketchbook = []; }
@@ -291,7 +291,7 @@
     for (const lv of levels) {
       const saved = sketchbook.some(item => item.id === lv.id);
       const card = document.createElement('article'); card.className = 'studio-card campaign-card'; card.dataset.levelId = lv.id;
-      const thumbnail = document.createElement('a'); thumbnail.href = 'index.html#level=' + Kit.encode(lv); thumbnail.setAttribute('aria-label', 'Play ' + lv.name);
+      const thumbnail = document.createElement('a'); thumbnail.href = 'index.html?from=studio#level=' + Kit.encode(lv); thumbnail.setAttribute('aria-label', 'Play ' + lv.name);
       const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 180; canvas.setAttribute('aria-hidden', 'true'); thumbnail.append(canvas);
       const title = document.createElement('h3'); title.textContent = lv.name;
       const goal = document.createElement('p'); goal.textContent = lv.story;
@@ -311,9 +311,9 @@
   }
   function updateViewUrl(name, editId) {
     const url = new URL(location.href); url.searchParams.set('tab', name);
-    for (const key of ['campaign', 'library', 'new', 'edit']) url.searchParams.delete(key);
+    for (const key of ['campaign', 'library', 'new', 'edit', 'from']) url.searchParams.delete(key);
     url.hash = '';
-    if (editId) url.searchParams.set('edit', editId);
+    if (editId) { url.searchParams.set('edit', editId); url.searchParams.set('from', homeTab); }
     window.history.replaceState(null, '', url);
   }
   function showTab(name, updateUrl = true, preserve = true) {
@@ -321,23 +321,26 @@
     const levels = name === 'levels';
     $('#levelsPanel').hidden = !levels; $('#studioPanel').hidden = levels;
     $('#editorPanel').hidden = true; $('#studioLibrary').hidden = false;
+    $('#btnHome').hidden = true; document.querySelector('.workspace-tabs').hidden = false;
     for (const [id, selected] of [['#tabLevels', levels], ['#tabStudio', !levels]]) {
       $(id).setAttribute('aria-selected', String(selected)); $(id).tabIndex = selected ? 0 : -1;
     }
     if (levels) campaignList(); else library();
     if (updateUrl) updateViewUrl(name);
   }
-  function openEditor(next, preserve = true, updateUrl = true) {
+  function openEditor(next, preserve = true, updateUrl = true, origin) {
     if (preserve && !preserveDraft()) return;
+    if ($('#editorPanel').hidden) homeTab = ['levels', 'studio'].includes(origin) ? origin : $('#levelsPanel').hidden ? 'studio' : 'levels';
     showTab('studio', false, false);
     setLevel(next);
     $('#studioLibrary').hidden = true; $('#editorPanel').hidden = false;
+    $('#btnHome').hidden = false; document.querySelector('.workspace-tabs').hidden = true;
     if (updateUrl) updateViewUrl('studio', level.id);
     window.scrollTo({ top: 0 });
   }
   $('#tabLevels').onclick = () => showTab('levels');
   $('#tabStudio').onclick = () => showTab('studio');
-  $('#backToStudio').onclick = () => showTab('studio');
+  $('#btnHome').onclick = () => showTab(homeTab);
   document.querySelector('.workspace-tabs').addEventListener('keydown', ev => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(ev.key)) return;
     ev.preventDefault();
@@ -366,7 +369,7 @@
       const row = document.createElement('div'); row.className = 'world-levels level-grid'; row.setAttribute('aria-label', world.name + ' levels');
       LEVELS.filter(lv => lv.world === wi).forEach(lv => {
         const card = document.createElement('article'); card.className = 'campaign-card';
-        const thumbnail = document.createElement('a'); thumbnail.href = 'index.html?level=' + (lv.n - 1); thumbnail.setAttribute('aria-label', 'Play ' + lv.name);
+        const thumbnail = document.createElement('a'); thumbnail.href = 'index.html?from=levels&level=' + (lv.n - 1); thumbnail.setAttribute('aria-label', 'Play ' + lv.name);
         const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 180; canvas.dataset.levelIndex = lv.n - 1; canvas.setAttribute('aria-hidden', 'true'); thumbnail.append(canvas);
         const title = document.createElement('h3'); title.textContent = lv.n + '. ' + lv.name;
         const goal = document.createElement('p'); goal.textContent = lv.story;
@@ -428,12 +431,12 @@
   refresh();
   showTab(params.get('tab') === 'levels' ? 'levels' : 'studio', false);
   try {
-    if (hash.has('level')) openEditor(Kit.decode(hash.get('level')));
-    else if (params.has('campaign')) openEditor(Kit.remix(LEVELS[Math.max(0, Math.min(99, Number(params.get('campaign')) || 0))]));
-    else if (params.has('new')) openEditor(Kit.blank());
+    if (hash.has('level')) openEditor(Kit.decode(hash.get('level')), true, true, params.get('from'));
+    else if (params.has('campaign')) openEditor(Kit.remix(LEVELS[Math.max(0, Math.min(99, Number(params.get('campaign')) || 0))]), true, true, 'levels');
+    else if (params.has('new')) openEditor(Kit.blank(), true, true, params.get('from'));
     else if (params.has('edit')) {
       const saved = (draft?.id === params.get('edit') ? draft : null) || sketchbook.find(lv => lv.id === params.get('edit'));
-      if (saved) openEditor(saved, false);
+      if (saved) openEditor(saved, false, true, params.get('from'));
       else notify('This level is no longer in your Studio.');
     }
   } catch (e) { notify(e.message); }
