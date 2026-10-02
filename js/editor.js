@@ -48,7 +48,7 @@
     clearTimeout(draftTimer);
     draftTimer = setTimeout(() => {
       try { Kit.write('draft', level); }
-      catch (e) { notify('Browser storage is full or unavailable. Export your puzzle as JSON.'); }
+      catch (e) { notify('Browser storage is full or unavailable. Free some browser storage and try saving again.'); }
     }, 200);
   }
   function remember(before) { history.push(before); if (history.length > 70) history.shift(); future = []; }
@@ -70,12 +70,12 @@
   }
   function writeLibrary() {
     try { Kit.write('library', sketchbook); $('#savedCount').textContent = sketchbook.length; return true; }
-    catch (e) { notify('Could not save to this browser. Export your puzzle as JSON instead.'); return false; }
+    catch (e) { notify('Could not save to this browser. Free some browser storage and try again.'); return false; }
   }
   function saveToLibrary(quiet) {
     const current = Kit.validate(level), i = sketchbook.findIndex(l => l.id === current.id);
     const old = sketchbook.slice();
-    if (i >= 0) sketchbook[i] = current; else if (sketchbook.length >= 100) { notify('Your sketchbook has 100 puzzles. Export or remove one before adding another.'); return false; } else sketchbook.unshift(current);
+    if (i >= 0) sketchbook[i] = current; else if (sketchbook.length >= 100) { notify('Your sketchbook has 100 puzzles. Remove one before adding another.'); return false; } else sketchbook.unshift(current);
     if (!writeLibrary()) { sketchbook = old; return false; }
     if (!quiet) notify('Saved to your sketchbook.'); return true;
   }
@@ -85,7 +85,6 @@
     $('#selectTool').setAttribute('aria-pressed', String(next === 'select'));
     document.querySelectorAll('.toy').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.toy === next)));
     cv.style.cursor = next === 'select' ? 'default' : 'crosshair';
-    $('#toolInstruction').textContent = next === 'select' ? 'Select a toy to move it. Drag the blue handles to resize a platform.' : next === 'plank' ? 'Click and drag across the paper to draw a platform.' : 'Click the paper to place a ' + (toys.find(t => t[0] === next) || ['',next])[1].toLowerCase() + '.';
   }
   function drawTo(canvas, lv, selectedIndex = -1, hint = false) {
     const c = canvas.getContext('2d'), sketch = canvas === cv ? cr : new Crayon(c), scale = canvas.width / 1600;
@@ -110,9 +109,7 @@
   function render() { drawTo(cv, level, selected, $('#showHint').checked); }
   function refresh() {
     sim = new Sim(level, []); render(); settings(); inspector();
-    $('#objectCount').textContent = level.parts.length + ' object' + (level.parts.length === 1 ? '' : 's');
     $('#undoEdit').disabled = !history.length; $('#redoEdit').disabled = !future.length;
-    $('#solutionState').textContent = level.hintVerified ? 'Solved! A working hint is tucked into this puzzle.' : level.solution.length ? 'Includes an original hint. Edits to the puzzle will clear it.' : 'Play it, solve it, turn your drawing into a hint.';
     $('#showHint').disabled = !level.solution.length;
   }
   function settings() {
@@ -312,19 +309,6 @@
   $('#remixLevel').onclick=()=>{remixList();$('#remixDialog').showModal();};$('#worldFilter').onchange=remixList;
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
   document.querySelectorAll('dialog.modal').forEach(d=>d.addEventListener('click',ev=>{if(ev.target===d){const r=d.getBoundingClientRect();if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)d.close();}}));
-  $('#importLevel').onclick=()=>$('#fileInput').click();
-  $('#fileInput').onchange=async ev=>{
-    const file=ev.target.files[0];if(!file)return;
-    try{if(file.size>250000)throw new Error('Choose a level file smaller than 250 KB.');const next=Kit.validate(JSON.parse(await file.text()));if(preserveDraft()){setLevel(next);notify('Puzzle imported.');}}
-    catch(e){notify('Could not import: '+e.message);}finally{ev.target.value='';}
-  };
-  $('#exportLevel').onclick=()=>{
-    try{const lv=Kit.validate(level),blob=new Blob([JSON.stringify({format:'pochadraw',version:1,level:lv},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(lv.name.replace(/[^a-z0-9-]/gi,'-').replace(/-+/g,'-').slice(0,60)||'puzzle')+'.pochadraw.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('Puzzle exported.');}catch(e){notify(e.message);}
-  };
-  $('#shareLevel').onclick=()=>{
-    try{const url=new URL('index.html',location.href);url.hash='level='+Kit.encode(level);$('#shareUrl').value=url.href;$('#openShare').href=url.href;$('#shareDialog').showModal();}catch(e){notify(e.message);}
-  };
-  $('#copyShare').onclick=async()=>{try{await navigator.clipboard.writeText($('#shareUrl').value);notify('Playable link copied.');}catch(e){$('#shareUrl').focus();$('#shareUrl').select();notify('Select the link and copy it with Ctrl/Cmd C.');}};
   $('#testLevel').onclick=()=>{
     try{const lv=Kit.validate(level);if(!lv.parts.some(p=>['cup','bell','balloon','lamp','boss','flag'].includes(p.type)&&p.goal!==false)&&!(lv.goal&&lv.goal.stars))throw new Error('Add a goal, such as a basket, bell, or balloon, before testing.');
       capture=null;$('#recordHint').hidden=true;$('#testStatus').textContent='Draw your solution, then press GO.';$('#testTitle').textContent=lv.name;

@@ -16,13 +16,13 @@ Draw the missing parts of a machine and press **GO**. Seven crayons have differe
 - Place balls, platforms, baskets, blocks, bells, dominoes, seesaws, pushers, balloons, crates, trampolines, fans, notes and lava.
 - Select and drag objects. Drag platform endpoints to resize or rotate them. Edit other dimensions, angles, materials and mechanism settings in the inspector.
 - Set the ink budget, choose player crayons and pick a paper background.
-- Undo/redo edits. Drafts save automatically; **Save to sketchbook** keeps a named puzzle. Starting or loading another puzzle keeps your previous draft in the sketchbook.
+- Undo/redo edits. Drafts save automatically; **Save** keeps a named puzzle. Starting or loading another puzzle keeps your previous draft in the sketchbook.
 - **Test & draw** uses the original game and physics. Complete the puzzle, then keep your winning drawing as a hint. The studio replays the drawing before accepting it.
-- Export/import `.pochadraw.json` files or share a playable URL. Receivers can open the puzzle in the editor and remix it.
+- Play saved puzzles from the Levels tab.
 
 The game’s Levels button opens a shared workspace with **Levels** and **Studio** tabs. Browse campaign and saved puzzles in Levels; choose Edit or switch to Studio to build a puzzle. Both views share the game’s wood background, top bar and paper controls. Save status appears beside Save in Studio.
 
-Custom puzzles, editor drafts and completed-level star progress save to a shared Convex workspace. Gameplay drawings, the selected level, sound preferences and tutorial state stay in browser storage and never upload or restore from the cloud. There is one workspace, with no authentication or user scoping. Browser storage caches saves offline; pending changes retry when the connection returns. Star saves keep the best score. Share links still contain the level itself. Export JSON for portable backups. Live puzzle hint capture is replay-checked; erasing during a live run may require drawing a fresh solution to record a reproducible hint.
+Custom puzzles, editor drafts and completed-level star progress save to a shared Convex workspace. Gameplay drawings, the selected level, sound preferences and tutorial state stay in browser storage and never upload or restore from the cloud. There is one workspace, with no authentication or user scoping. Browser storage caches saves offline; pending changes retry when the connection returns. Star saves keep the best score. Share links still contain the level itself. Live puzzle hint capture is replay-checked; erasing during a live run may require drawing a fresh solution to record a reproducible hint.
 
 ## Run locally
 

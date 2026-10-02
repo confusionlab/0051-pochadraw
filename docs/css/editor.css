@@ -71,3 +71,6 @@
   .world-picker { width: 100%; }
   .world-picker select { min-width: 0; flex: 1; }
 }
+
+.select-tool .cursor-icon { width: 20px; height: 24px; flex: 0 0 auto; fill: currentColor; stroke: var(--paper); stroke-width: 1.2; stroke-linejoin: round; }
+.document-actions > .test-button { white-space: nowrap; }

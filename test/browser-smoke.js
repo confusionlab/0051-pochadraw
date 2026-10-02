@@ -48,18 +48,13 @@ try {
   click('#recordHint');settle();assert.equal(state().hintVerified,true);
   assert.equal(evalJS('document.querySelector("#testDialog").open'),false);
   console.log('PASS pointer drawing, game physics, win message and replay-checked hint capture');
-  click('#shareLevel');
-  const share=evalJS('document.querySelector("#shareUrl").value');
-  assert.equal(evalJS('CC.LevelKit.decode(new URL(document.querySelector("#shareUrl").value).hash.slice(7)).name'),'포차 ✎ café');
-  click('#shareDialog [data-close]');
-  const original=state();
-  evalJS(`(() => {const level=CC.LevelKit.read('draft',null);level.name='Imported puzzle';const file=new File([JSON.stringify({format:'pochadraw',version:1,level})],'puzzle.json',{type:'application/json'}),dt=new DataTransfer();dt.items.add(file);const input=document.querySelector('#fileInput');input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));return true;})()`);
-  settle();assert.equal(state().name,'Imported puzzle');
-  // Capture the actual browser download trigger without writing a test artifact.
-  evalJS(`window.__download=null;window.__anchorClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){window.__download={name:this.download,href:this.href};};true`);
-  click('#exportLevel');assert.ok(evalJS('window.__download.name.endsWith(".pochadraw.json") && window.__download.href.startsWith("blob:")'));
-  evalJS('HTMLAnchorElement.prototype.click=window.__anchorClick;true');
-  console.log('PASS share encoding, JSON file import and export download');
+  assert.equal(evalJS('!!document.querySelector(".document-actions #testLevel")'),true);
+  assert.equal(evalJS('!!document.querySelector("#selectTool svg")'),true);
+  assert.equal(evalJS('!!document.querySelector(".palette-note,.stage-caption,.paper-tab,.test-strip,.bottom-actions")'),false);
+  click('#saveLevel');click('#tabLevels');
+  const share=evalJS('document.querySelector(".saved-card .actions a").href');
+  assert.equal(evalJS('CC.LevelKit.decode(new URL(document.querySelector(".saved-card .actions a").href).hash.slice(7)).name'),'포차 ✎ café');
+  console.log('PASS compact editor controls and saved puzzle play link');
   const sharedPreview=new URL(share);sharedPreview.searchParams.set('preview','1');
   browser('open',sharedPreview.href);browser('wait','--load','networkidle');
   assert.equal(evalJS('CCDBG.st.level.name'),'포차 ✎ café');
