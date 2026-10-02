@@ -75,6 +75,24 @@
   .workspace-tabs { display: flex; gap: 8px; }
   .workspace-tabs .chip[aria-selected="true"] { background: var(--sticky); color: var(--desk-ink); text-decoration: none; }
   .workspace-tabs .chip { white-space: nowrap; }
+
+  .crayon-tooltip {
+    position: fixed; z-index: 1000; box-sizing: border-box; width: 270px; max-width: calc(100vw - 24px);
+    padding: 12px 14px; background: var(--paper); color: var(--graphite);
+    border: 2px solid var(--graphite); border-radius: var(--hand-radius);
+    box-shadow: 2px 3px 0 rgba(47, 43, 54, 0.25), var(--shadow);
+    font: 18px/1.3 var(--font-hand);
+  }
+  .crayon-tooltip::before {
+    content: ''; position: absolute; width: 12px; height: 12px; top: -8px; left: calc(var(--tip-arrow) - 7px);
+    background: var(--paper); border-top: 2px solid var(--graphite); border-left: 2px solid var(--graphite); transform: rotate(45deg);
+  }
+  .crayon-tooltip[data-side="above"]::before { top: auto; bottom: -8px; transform: rotate(225deg); }
+  .crayon-tooltip-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+  .crayon-tooltip-heading .stick { flex: none; width: 38px; height: 12px; }
+  .crayon-tooltip strong { font: 700 22px/1.1 var(--font-sketch); }
+  .crayon-tooltip kbd { margin-left: auto; padding: 0 5px; border: 1px solid var(--paper-edge); border-radius: 3px; background: #f7f2e5; color: var(--muted); font: 14px/1.35 var(--font-hand); }
+  .crayon-tooltip p { margin: 0; }
   @media (max-width: 640px) {
     .logo-mascot { width: 34px; height: 34px; }
     .top .logo { font-size: 28px; }

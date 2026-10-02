@@ -19,9 +19,14 @@
 
   const ORDER = ['solid', 'loose', 'bouncy', 'floaty', 'hinge', 'zoom', 'magnet'];
   const TOOLS = {
-    solid: ['Blue', 'stays put'], loose: ['Orange', 'heavy, falls at GO'], bouncy: ['Green', 'bouncy'],
-    floaty: ['Yellow', 'floats up'], hinge: ['Purple', 'swings from a pin'], zoom: ['Red', 'boosts along'],
-    magnet: ['Black', 'magnet for steel'], erase: ['Eraser', 'rubs out a bit']
+    solid: ['Blue', 'stays put', 'Stays exactly where you draw it. Build steady ramps, bridges, and walls.'],
+    loose: ['Orange', 'heavy, falls at GO', 'Falls and tumbles when the machine runs. Use its weight to push things or tip a seesaw.'],
+    bouncy: ['Green', 'bouncy', 'Makes a springy surface that bounces Pochaco and other objects.'],
+    floaty: ['Yellow', 'floats up', 'Floats upward when the machine runs. Use it to lift lighter objects.'],
+    hinge: ['Purple', 'swings from a pin', 'Pins the start of your line in place. The rest swings around it like a lever.'],
+    zoom: ['Red', 'boosts along', 'Pushes objects along your line in the direction you draw. Draw toward where you want them to go.'],
+    magnet: ['Black', 'magnet for steel', 'Pulls steel Pochaco and other magnetic objects toward your line.'],
+    erase: ['Eraser', 'rubs out a bit', 'Rubs out a small part of your drawing. Drag along a line to trim it.']
   };
   const ERASER_R = 0.24;
 
@@ -144,7 +149,46 @@
     cv.setAttribute('aria-label', `Level ${st.level.n}: ${st.level.name}. ${st.level.story}`);
     if (!st.level.custom && st.level.n === st.world.first && !store.get('pd-game-seen-world-' + st.level.world, 0)) showWorldIntro();
   }
+  const toolTip = $('#crayonTooltip');
+  let tipOwner = null, tipHideTimer;
+  function hideToolTip() {
+    clearTimeout(tipHideTimer);
+    tipOwner?.removeAttribute('aria-describedby');
+    tipOwner = null; toolTip.hidden = true;
+  }
+  function showToolTip(button) {
+    clearTimeout(tipHideTimer);
+    tipOwner?.removeAttribute('aria-describedby');
+    tipOwner = button;
+    const kind = button.dataset.tool, key = kind === 'erase' ? 'E' : String(ORDER.indexOf(kind) + 1);
+    toolTip.querySelector('.stick').className = 'stick ' + kind;
+    toolTip.querySelector('strong').textContent = TOOLS[kind][0];
+    toolTip.querySelector('kbd').textContent = key;
+    toolTip.querySelector('kbd').setAttribute('aria-label', 'Keyboard shortcut ' + key);
+    toolTip.querySelector('p').textContent = TOOLS[kind][2];
+    toolTip.hidden = false;
+    const r = button.getBoundingClientRect(), gap = 12, width = toolTip.offsetWidth, height = toolTip.offsetHeight;
+    const left = Math.max(gap, Math.min(innerWidth - width - gap, r.left + r.width / 2 - width / 2));
+    const below = r.bottom + gap + height <= innerHeight - gap;
+    toolTip.style.left = left + 'px';
+    toolTip.style.top = Math.max(gap, below ? r.bottom + gap : r.top - height - gap) + 'px';
+    toolTip.style.setProperty('--tip-arrow', Math.max(18, Math.min(width - 18, r.left + r.width / 2 - left)) + 'px');
+    toolTip.dataset.side = below ? 'below' : 'above';
+    button.setAttribute('aria-describedby', toolTip.id);
+  }
+  function leaveToolTip() {
+    clearTimeout(tipHideTimer);
+    tipHideTimer = setTimeout(() => {
+      if (!tipOwner || toolTip.matches(':hover') || tipOwner.matches(':hover') || tipOwner === document.activeElement) return;
+      hideToolTip();
+    }, 120);
+  }
+  toolTip.addEventListener('pointerenter', () => clearTimeout(tipHideTimer));
+  toolTip.addEventListener('pointerleave', leaveToolTip);
+  window.addEventListener('scroll', hideToolTip, { capture: true, passive: true });
+  window.addEventListener('resize', hideToolTip);
   function renderTools() {
+    hideToolTip();
     const box = $('#tools');
     box.textContent = '';
     const list = ORDER.filter(t => st.level.crayons.includes(t)).concat(['erase']);
@@ -153,10 +197,13 @@
       b.className = 'tool'; b.type = 'button'; b.dataset.tool = t;
       b.setAttribute('role', 'radio');
       const key = t === 'erase' ? 'E' : String(ORDER.indexOf(t) + 1);
-      b.title = `${TOOLS[t][0]}: ${TOOLS[t][1]} (${key})`;
-      b.setAttribute('aria-label', b.title);
+      b.setAttribute('aria-label', `${TOOLS[t][0]}: ${TOOLS[t][1]} (${key})`);
       b.innerHTML = `<span class="stick ${t}"></span><span><b>${TOOLS[t][0]}<span class="key">${key}</span></b><small>${TOOLS[t][1]}</small></span>`;
       b.addEventListener('click', () => { Audio.unlock(); setTool(t); });
+      b.addEventListener('pointerenter', ev => { if (ev.pointerType !== 'touch') showToolTip(b); });
+      b.addEventListener('pointerleave', leaveToolTip);
+      b.addEventListener('focus', () => showToolTip(b));
+      b.addEventListener('blur', leaveToolTip);
       box.appendChild(b);
     }
     syncTools();
@@ -500,6 +547,7 @@
 
   /* ---------- overlays ---------- */
   function showOverlay(html, clear) {
+    hideToolTip();
     const o = $('#overlay');
     o.innerHTML = html; o.hidden = false;
     o.classList.toggle('clear', !!clear);
@@ -640,6 +688,7 @@
   window.addEventListener('keydown', ev => {
     if (ev.target.closest && ev.target.closest('input, textarea')) return;
     const key = ev.key.toLowerCase();
+    if (key === 'escape' && !toolTip.hidden) { hideToolTip(); ev.preventDefault(); return; }
     if (key === ' ' || key === 'enter') { if (ev.target.tagName === 'BUTTON') return; ev.preventDefault(); go(); }
     else if (key === 'z') { ev.preventDefault(); undo(); }
     else if (/^[1-7]$/.test(key)) setTool(ORDER[Number(key) - 1]);
