@@ -6,10 +6,10 @@ function present(level) {
   } else if (target && target.type === 'cup') {
     const container = target.style || 'basket';
     if (level.goal && level.goal.need) {
-      const items = target.accept === 'egg' ? 'eggs' : 'balls';
+      const items = target.accept === 'egg' ? 'fragile Pochacos' : 'Pochacos';
       level.story = `At least ${level.goal.need} ${items} into the ${container}`;
     } else {
-      const item = { steel: 'Steel ball', bowling: 'Bowling ball', tennis: 'Tennis ball', meatball: 'Meatball' }[target.accept] || 'Ball';
+      const item = { steel: 'Steel Pochaco', bowling: 'Heavy Pochaco', tennis: 'Bouncy Pochaco', meatball: 'Soft Pochaco', egg: 'Fragile Pochaco' }[target.accept] || 'Pochaco';
       level.story = `${item} into the ${container}`;
     }
   } else if (target && target.type === 'boss') {
@@ -19,6 +19,7 @@ function present(level) {
     if (!target || !goals[target.type]) throw new Error(`Missing goal phrase for level ${level.n}`);
     level.story = goals[target.type];
   }
+  if (level.tip) level.tip = level.tip.replace(/\bballs\b/gi, 'Pochacos').replace(/\bball\b/gi, 'Pochaco');
   level.parts = level.parts.filter(p => p.type !== 'label');
   for (const part of level.parts) {
     delete part.label;

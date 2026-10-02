@@ -2,7 +2,7 @@
 (async function () {
   'use strict';
   const CC = window.CC;
-  await CC.Cloud?.ready;
+  await Promise.all([CC.Cloud?.ready, CC.Pochaco.ready]);
   const { Sim, geom, LEVELS, WORLDS, PAL, Crayon, Draw, Audio } = CC;
   const { DT } = CC.K;
   const campaignCount = LEVELS.length;

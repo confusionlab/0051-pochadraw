@@ -67,7 +67,7 @@
   }
   const remix = lv => validate(Object.assign(clone(lv), { id: uid(), name: lv.name + ' (remix)', custom: true, paper: (CC.WORLDS[lv.world] || {}).paper || 'graph' }));
   function blank() {
-    return validate({ id: uid(), name: 'My first contraption', story: 'Ball into the basket', tip: 'Draw a ramp from the shelf toward the basket.', verb: 'SWISH!', crayons: crayons.slice(), ink: 30, par: [15, 22.5], solution: [], parts: [
+    return validate({ id: uid(), name: 'My first contraption', story: 'Pochaco into the basket', tip: 'Draw a ramp from the shelf toward the basket.', verb: 'SWISH!', crayons: crayons.slice(), ink: 30, par: [15, 22.5], solution: [], parts: [
       { type: 'ball', x: 2, y: 2.2, style: 'rubber', hold: 'start' },
       { type: 'plank', x1: 0.4, y1: 2.5, x2: 3.5, y2: 3.1, t: 0.2 },
       { type: 'cup', x: 12.5, y: 7.8, w: 1.8, h: 1.1, style: 'basket' }

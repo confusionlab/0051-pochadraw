@@ -5,6 +5,13 @@
   'use strict';
   const CC = root.CC;
   const { PAL, shapes } = CC;
+  // One shared sprite for play, studio and level previews.
+  const pochaco = new Image();
+  CC.Pochaco = { image: pochaco, ready: new Promise(resolve => {
+    pochaco.onload = () => resolve(true);
+    pochaco.onerror = () => resolve(false);
+  }) };
+  pochaco.src = new URL('../assets/pochaco.png', document.currentScript.src).href;
   const S = 100;
   const FLOOR = CC.K.FLOOR_Y * S;
   const SKETCH = '"Cabin Sketch", "Patrick Hand", cursive';
@@ -165,61 +172,25 @@
 
   /* ---------- balls ---------- */
   function ballArt(g, style, r, seed) {
-    const cr = g.cr;
-    switch (style) {
-      case 'tennis':
-        cr.shape(shapes.circle(0, 0, r), { fill: PAL.lime, stroke: '#7B8A1C', w: 3, gap: 4, seed });
-        cr.line(shapes.arc(-r * 1.08, 0, r * 0.78, -0.95, 0.95, 10), { color: PAL.paper, w: 3.2, seed: seed + 1 });
-        cr.line(shapes.arc(r * 1.08, 0, r * 0.78, Math.PI - 0.95, Math.PI + 0.95, 10), { color: PAL.paper, w: 3.2, seed: seed + 2 });
-        break;
-      case 'marble': {
-        cr.shape(shapes.circle(0, 0, r), { fill: PAL.sky, stroke: PAL.navy, w: 2.8, gap: 3.6, seed });
-        const sp = [];
-        for (let i = 0; i < 14; i++) { const a = i * 0.55, rr = r * (0.12 + i * 0.05); sp.push([Math.cos(a) * rr, Math.sin(a) * rr]); }
-        cr.line(sp, { color: PAL.navy, w: 2.6, seed: seed + 3 });
-        break;
-      }
-      case 'bowling':
-        cr.shape(shapes.circle(0, 0, r), { fill: PAL.plum, stroke: PAL.black, w: 3.2, gap: 3.4, density: 1, seed, cross: true });
-        for (const [hx, hy] of [[-0.3, -0.42], [0.08, -0.55], [-0.05, -0.18]]) cr.line([[hx * r, hy * r]], { w: r * 0.24, color: PAL.black, wob: 0 });
-        break;
-      case 'beach': {
-        const cols = [PAL.red, null, PAL.blue, PAL.yellow, null, PAL.green];
-        for (let i = 0; i < 6; i++) {
-          const a0 = i * Math.PI / 3, a1 = a0 + Math.PI / 3;
-          if (cols[i]) {
-            const pts = [[0, 0]].concat(shapes.arc(0, 0, r, a0, a1, 6));
-            cr.fill(c => { c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r, a0, a1); c.closePath(); }, CC.bbox(pts), { color: cols[i], gap: 5, angle: a0 + 0.5, seed: seed + i });
-          }
-          cr.line([[0, 0], [Math.cos(a0) * r, Math.sin(a0) * r]], { color: PAL.graphite, w: 2, seed: seed + i + 9 });
-        }
-        cr.line(shapes.circle(0, 0, r), { color: PAL.graphite, w: 3, closed: true, seed: seed + 20 });
-        cr.shape(shapes.circle(0, 0, r * 0.14, 10), { fill: PAL.paper, stroke: PAL.graphite, w: 2, seed: seed + 21 });
-        break;
-      }
-      case 'steel':
-        cr.shape(shapes.circle(0, 0, r), { fill: PAL.silver, stroke: '#4A4A55', w: 3, gap: 3.6, seed, cross: true });
-        cr.line([[-r * 0.45, -r * 0.1], [r * 0.45, -r * 0.1]], { color: '#6E6E78', w: 2.2, seed: seed + 1 });
-        cr.line([[-r * 0.35, r * 0.3], [r * 0.35, r * 0.3]], { color: '#6E6E78', w: 2.2, seed: seed + 2 });
-        break;
-      case 'egg': {
-        const pts = [];
-        for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2, s = Math.sin(a); pts.push([Math.cos(a) * r * 0.9, s * r * (s < 0 ? 1.18 : 0.95)]); }
-        cr.shape(pts, { fill: '#FFF6E2', stroke: '#B8A07A', w: 2.6, gap: 4, seed, wash: 0.6 });
-        for (const [hx, hy] of [[-0.3, -0.35], [0.25, 0.1], [-0.1, 0.4], [0.35, -0.5]]) cr.line([[hx * r, hy * r]], { w: 3, color: '#C9A87A', wob: 0 });
-        break;
-      }
-      case 'meatball': {
-        const pts = [];
-        for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2, rr = r * (1 + 0.08 * Math.sin(a * 5 + 1.3)); pts.push([Math.cos(a) * rr, Math.sin(a) * rr]); }
-        cr.shape(pts, { fill: '#8C4A26', stroke: PAL.darkbrown, w: 3, gap: 3.8, seed, cross: true });
-        for (const [hx, hy, col] of [[-0.35, -0.2, PAL.darkbrown], [0.3, 0.25, PAL.darkbrown], [0.1, -0.45, PAL.green], [-0.2, 0.4, PAL.green]]) cr.line([[hx * r, hy * r]], { w: 4, color: col, wob: 0 });
-        break;
-      }
-      default: // rubber
-        cr.shape(shapes.circle(0, 0, r), { fill: PAL.red, stroke: PAL.darkred, w: 3.2, gap: 4.4, seed });
-        cr.shape(star(0, 0, r * 0.5), { fill: PAL.yellow, stroke: PAL.gold, w: 2, gap: 3, seed: seed + 4, wob: 0.5 });
+    const c = g.ctx;
+    // The artwork and collision fixture share a circle; floppy ears stay inside.
+    c.save(); c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.clip();
+    c.fillStyle = '#fffaf0'; c.fill();
+    if (pochaco.complete && pochaco.naturalWidth) {
+      c.drawImage(pochaco, -r, -r, r * 2, r * 2);
+    } else {
+      // Keep Pochaco recognizable even if the image cannot be loaded.
+      const cr = g.cr;
+      cr.shape(shapes.circle(0, 0, r), { fill: '#fffaf0', stroke: PAL.graphite, w: 2, seed });
+      for (const x of [-.69, .69]) cr.shape(shapes.ellipse(x*r, -.25*r, .3*r, .55*r), { fill: PAL.graphite, seed });
+      for (const x of [-.34, .34]) cr.shape(shapes.ellipse(x*r, .25*r, .07*r, .12*r), { fill: PAL.black, seed });
+      cr.shape(shapes.ellipse(0, .42*r, .12*r, .07*r), { fill: PAL.black, seed });
     }
+    c.restore();
+    // Preserve a small material cue for puzzles with different weights/behaviors.
+    const rim = { tennis: PAL.lime, marble: PAL.sky, bowling: PAL.plum,
+      beach: PAL.yellow, steel: PAL.silver, egg: PAL.gold, meatball: PAL.brown }[style];
+    if (rim) g.cr.line(shapes.circle(0, 0, r), { color: rim, w: Math.max(1.5, r*.07), closed: true, seed });
   }
   R.ball = {
     live(g, p) {
@@ -232,7 +203,6 @@
         dot(g, px, py - 16, 9, PAL.red);
       }
       withBody(g, b, () => ballArt(g, st, r, (p.def.x * 10) | 0));
-      if (st !== 'bowling' && st !== 'meatball' && st !== 'egg') g.cr.line(shapes.arc(q.x * S, q.y * S, r * 0.64, 3.5, 4.5, 6), { color: PAL.paper, w: Math.max(2.5, r * 0.14), alpha: 0.85, seed: 2 });
     }
   };
 

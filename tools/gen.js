@@ -1,5 +1,6 @@
 /* Crayon Contraptions — generate all 100 levels into js/levels.js.
    node tools/gen.js            build (uses tools/cache for unchanged slots)
+   node tools/gen.js --presentation-only  update captions without rebuilding puzzles
    node tools/gen.js --force    rebuild every generated slot
    node tools/gen.js 23 57      rebuild just these level numbers
    Every generated level carries a solution the search proved: it wins, an
@@ -32,6 +33,14 @@ const args = process.argv.slice(2), force = args.includes('--force'), only = arg
 fs.mkdirSync(CACHE, { recursive: true });
 
 const load = require('../test/load');
+if (args.includes('--presentation-only')) {
+  const file = path.join(ROOT, 'js', 'levels.js');
+  const levels = load().LEVELS.map(present);
+  const source = fs.readFileSync(file, 'utf8');
+  fs.writeFileSync(file, source.replace(/CC\.LEVELS = \[.*\];/, () => 'CC.LEVELS = ' + JSON.stringify(levels) + ';'));
+  console.log(`Updated captions for ${levels.length} existing puzzles.`);
+  return;
+}
 const HAND = load(['tools/hand.js']).HAND;
 
 const slots = [];

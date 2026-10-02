@@ -51,6 +51,7 @@
     letter-spacing: 0.01em;
     display: flex; gap: 0.28em; align-items: baseline;
   }
+  .logo-mascot { width: 44px; height: 44px; object-fit: contain; align-self: center; flex: none; }
   .logo .w1 { color: var(--red-ink); transform: rotate(-2deg); display: inline-block; }
   .logo .w2 { color: var(--navy); transform: rotate(1deg); display: inline-block; }
   .top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -75,6 +76,7 @@
   .workspace-tabs .chip[aria-selected="true"] { background: var(--sticky); color: var(--desk-ink); text-decoration: none; }
   .workspace-tabs .chip { white-space: nowrap; }
   @media (max-width: 640px) {
+    .logo-mascot { width: 34px; height: 34px; }
     .top .logo { font-size: 28px; }
     .top .chip { padding: 3px 8px; font-size: 16px; }
   }
