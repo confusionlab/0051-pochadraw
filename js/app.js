@@ -182,10 +182,10 @@
     const b = $('#btnGo');
     let label = 'GO!', rew = false;
     if (live()) { if (st.mode !== 'ready') { label = 'Restart'; rew = true; } }
-    else if (st.mode !== 'edit') { label = 'Rewind'; rew = true; }
+    else if (st.mode !== 'edit') { label = 'Stop'; rew = true; }
     b.classList.toggle('rewind', rew);
     b.textContent = label;
-    b.setAttribute('aria-label', rew ? 'Start over' : 'Run the machine');
+    b.setAttribute('aria-label', rew ? label + ' the machine' : 'Run the machine');
     sheet.dataset.mode = st.mode;
   }
   function syncHud() {
@@ -370,7 +370,7 @@
   cv.addEventListener('pointerdown', ev => {
     Audio.unlock();
     if (ev.button > 0) return;
-    if (!canDraw()) { toast(live() ? 'Press Restart to try again' : 'Press Rewind to draw again'); return; }
+    if (!canDraw()) { toast(live() ? 'Press Restart to try again' : 'Press Stop to draw again'); return; }
     const p = toWorld(ev);
     try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* ignore */ }
     ev.preventDefault();
@@ -482,7 +482,7 @@
       </div>`, true);
   }
   const FAIL_TEXT = {
-    stopped: 'The machine stopped. Rewind, change your drawing, and try again.',
+    stopped: 'The machine stopped. Press Stop, change your drawing, and try again.',
     lost: 'Too many fell in the lava! Restart and catch more of them.',
     stuck: 'Everything got stuck before enough reached the goal.',
     time: 'Out of time! Restart and draw a little sooner.',
@@ -492,8 +492,8 @@
     st.stalledShown = true; st.mode = 'stalled'; st.fails++;
     Audio.fan(false); Audio.play('stalled');
     const why = st.sim.failReason || 'stopped';
-    $('#failText').textContent = st.fails >= 2 && why === 'stopped' ? 'Still stuck. Rewind and peek at a hint, or nudge your line a little.' : (FAIL_TEXT[why] || FAIL_TEXT.stopped);
-    $('#btnFailRewind').textContent = live() ? 'Restart' : 'Rewind';
+    $('#failText').textContent = st.fails >= 2 && why === 'stopped' ? 'Still stuck. Press Stop, then peek at a hint or nudge your line a little.' : (FAIL_TEXT[why] || FAIL_TEXT.stopped);
+    $('#btnFailRewind').textContent = live() ? 'Restart' : 'Stop';
     $('#failNote').hidden = false;
     syncGo();
   }
