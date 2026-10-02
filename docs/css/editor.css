@@ -113,3 +113,10 @@
 .delete-modal .modal-actions { justify-content: flex-end; }
 .delete-modal .button { font: 17px/1.35 var(--hand); border: 2px solid var(--desk-ink); border-radius: var(--hand-radius); box-shadow: 2px 3px 0 #3a261659; }
 .delete-modal #confirmDelete { background: var(--red); border-color: #9a3023; color: white; }
+
+.create-modal { width: 480px; background: var(--paper); border: 2px solid var(--desk-ink); border-radius: var(--hand-radius); }
+.create-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.create-option { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 124px; padding: 18px 10px; font: 21px/1.2 var(--hand); color: var(--desk-ink); background: #f7f2e5; border: 2px solid var(--desk-ink); border-radius: var(--hand-radius); box-shadow: 2px 3px 0 #3a261659; }
+.create-option svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.create-option:hover, .create-option:focus-visible { background: var(--sticky); }
+@media(max-width:400px) { .create-options { grid-template-columns: 1fr; } .create-option { flex-direction: row; min-height: 80px; } }

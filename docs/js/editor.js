@@ -469,7 +469,9 @@
     });
     updateCampaignProgress();
   }
-  $('#createLevel').onclick = () => openEditor(Kit.blank());
+  const blankLevel = () => Kit.validate({ ...Kit.blank(), parts: [], story: 'Complete the contraption', tip: '', verb: 'HOORAY!' });
+  $('#createLevel').onclick = () => $('#createDialog').showModal();
+  $('#newBlankLevel').onclick = () => { $('#createDialog').close(); openEditor(blankLevel()); };
   window.addEventListener('pochadraw:cloud', ({ detail }) => {
     if (detail.key === 'progress') updateCampaignProgress();
     if (detail.key === 'draft') {
@@ -487,7 +489,7 @@
       list.append(b);drawTo(c,lv);
     });
   }
-  $('#remixLevel').onclick=()=>{remixList();$('#remixDialog').showModal();};$('#worldFilter').onchange=remixList;
+  $('#remixLevel').onclick=()=>{$('#createDialog').close();remixList();$('#remixDialog').showModal();};$('#worldFilter').onchange=remixList;
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
   document.querySelectorAll('dialog.modal').forEach(d=>d.addEventListener('click',ev=>{if(ev.target===d){const r=d.getBoundingClientRect();if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)d.close();}}));
   $('#testLevel').onclick=()=>{
@@ -522,7 +524,7 @@
   try {
     if (hash.has('level')) openEditor(Kit.decode(hash.get('level')), true, true, params.get('from'));
     else if (params.has('campaign')) openEditor(Kit.remix(LEVELS[Math.max(0, Math.min(99, Number(params.get('campaign')) || 0))]), true, true, 'levels');
-    else if (params.has('new')) openEditor(Kit.blank(), true, true, params.get('from'));
+    else if (params.has('new')) openEditor(blankLevel(), true, true, params.get('from'));
     else if (params.has('edit')) {
       const saved = (draft?.id === params.get('edit') ? draft : null) || sketchbook.find(lv => lv.id === params.get('edit'));
       if (saved) openEditor(saved, false, true, params.get('from'));

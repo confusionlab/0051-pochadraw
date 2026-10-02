@@ -16,6 +16,7 @@ try {
   assert.match(evaluate(sessions[0], 'window.POCHADRAW_CONVEX_URL'), /vibrant-possum-622/);
   originalDraft=evaluate(sessions[0], `(async()=>{const rows=await CC.Cloud.client.query('workspace:snapshot',{});return JSON.parse(rows.find(r=>r.key==='draft')?.json||'null');})()`);
   evaluate(sessions[0], 'document.querySelector("#createLevel").click(); true');
+  evaluate(sessions[0], 'document.querySelector("#newBlankLevel").click(); true');
   evaluate(sessions[0], `(() => { const input=document.querySelector('#levelName'); input.value=${JSON.stringify(name)}; input.dispatchEvent(new Event('change')); document.querySelector('#saveLevel').click(); return true; })()`);
   ready(sessions[0]);
   id = evaluate(sessions[0], 'CC.LevelKit.read("draft", null).id');

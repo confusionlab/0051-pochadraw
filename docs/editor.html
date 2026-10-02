@@ -29,7 +29,7 @@
   </section>
   <section id="studioPanel" role="tabpanel" aria-labelledby="tabStudio">
     <section id="studioLibrary" class="levels-browser" aria-label="Your created levels">
-      <div class="browse-heading"><h1>Your levels <span id="savedCount">0</span></h1><div class="studio-create-actions"><button class="chip" id="createLevel">＋ New level</button><button class="chip" id="remixLevel">Remix a level</button></div></div>
+      <div class="browse-heading"><h1>Your levels <span id="savedCount">0</span></h1><button class="chip" id="createLevel" aria-haspopup="dialog" aria-controls="createDialog">＋ New level</button></div>
       <div id="libraryList" class="library-list level-grid"></div>
     </section>
     <section id="editorPanel" aria-label="Level editor" hidden>
@@ -73,6 +73,13 @@
   </section>
 </div>
 <div id="notification" class="notification" role="status" aria-live="polite" hidden></div>
+<dialog id="createDialog" class="modal create-modal" aria-labelledby="createTitle">
+  <div class="modal-heading"><h2 id="createTitle">New level</h2><button class="icon-button" data-close aria-label="Close new level options">×</button></div>
+  <div class="create-options">
+    <button class="button create-option" id="newBlankLevel" autofocus><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 3h13l6 6v20H7Z"/><path d="M20 3v6h6"/></svg>New blank level</button>
+    <button class="button create-option" id="remixLevel"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 8H5v21h18v-4M12 3h15v19H12Z"/><path d="M16 9h7M16 14h7M16 19h4"/></svg>Remix level</button>
+  </div>
+</dialog>
 <dialog id="deleteDialog" class="modal delete-modal" aria-labelledby="deleteTitle" aria-describedby="deleteWarning">
   <div class="modal-heading"><h2 id="deleteTitle">Delete level?</h2></div>
   <p id="deleteWarning">This will permanently delete <strong id="deleteLevelName"></strong>, including its saved version and draft. This cannot be undone.</p>
