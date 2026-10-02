@@ -1,10 +1,34 @@
-/* Crayon Contraptions — synthesized sound. Nothing is loaded; every noise is
-   built from oscillators and a noise buffer. Starts on the first tap. */
+/* Pochadraw — synthesized game sounds and randomly chosen meow win clips.
+   Starts on the first tap, which also preloads the five success sounds. */
 (function (root) {
   'use strict';
   const CC = root.CC;
   let ac = null, master = null, noiseBuf = null, muted = false;
   let scratch = null, whir = null;
+  const WIN_CLIPS = [1, 2, 3, 4, 5].map(n => 'assets/meow/' + n + '.mp3');
+  const winBuffers = new Map();
+
+  function loadWinClip(url) {
+    if (!winBuffers.has(url)) {
+      const pending = fetch(url).then(response => {
+        if (!response.ok) throw new Error('Could not load success sound.');
+        return response.arrayBuffer();
+      }).then(data => ac.decodeAudioData(data)).catch(error => {
+        winBuffers.delete(url); throw error;
+      });
+      winBuffers.set(url, pending);
+    }
+    return winBuffers.get(url);
+  }
+  async function playWinClip() {
+    const url = WIN_CLIPS[Math.floor(Math.random() * WIN_CLIPS.length)];
+    try {
+      const buffer = await loadWinClip(url);
+      if (muted) return;
+      const source = ac.createBufferSource(); source.buffer = buffer;
+      source.connect(master); source.onended = () => source.disconnect(); source.start();
+    } catch { /* A missing or unsupported sound must not interrupt the win. */ }
+  }
 
   function init() {
     if (ac) { if (ac.state === 'suspended') ac.resume(); return true; }
@@ -15,6 +39,7 @@
     noiseBuf = ac.createBuffer(1, ac.sampleRate * 1.5, ac.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    WIN_CLIPS.forEach(url => { loadWinClip(url).catch(() => {}); });
     return true;
   }
   const now = () => ac.currentTime;
@@ -53,7 +78,7 @@
     swish() { const t = now(), s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = noiseBuf; f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(600, t); f.frequency.exponentialRampToValueAtTime(3500, t + 0.3); env(g, t, 0.05, 0.4, 0.3); s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + 0.4); },
     lamp() { tone('square', 1800, 1200, 0.03, 0.12); tone('sine', 120, 0, 0.6, 0.06, 0.05); },
     whir() {},
-    win() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone('triangle', f, 0, 0.35, 0.2, 0.08 + i * 0.11)); tone('triangle', 1318.5, 0, 0.6, 0.12, 0.55); },
+    win: playWinClip,
     stalled() { tone('triangle', 392, 370, 0.25, 0.14); tone('triangle', 330, 300, 0.45, 0.14, 0.24); },
     tap() { noise(1800, 1.5, 0.03, 0.2); },
     tick() { tone('square', 880, 0, 0.06, 0.08); },
