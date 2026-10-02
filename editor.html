@@ -29,13 +29,13 @@
   </section>
   <section id="studioPanel" role="tabpanel" aria-labelledby="tabStudio">
     <section id="studioLibrary" class="levels-browser" aria-label="Your created levels">
-      <div class="browse-heading"><h1>Your levels <span id="savedCount">0</span></h1><button class="chip" id="createLevel">＋ New level</button></div>
+      <div class="browse-heading"><h1>Your levels <span id="savedCount">0</span></h1><div class="studio-create-actions"><button class="chip" id="createLevel">＋ New level</button><button class="chip" id="remixLevel">Remix a level</button></div></div>
       <div id="libraryList" class="library-list level-grid"></div>
     </section>
     <section id="editorPanel" aria-label="Level editor" hidden>
   <div class="document-bar">
     <div class="document-name"><span class="doc-icon" aria-hidden="true">▤</span><input id="levelName" maxlength="80" aria-label="Level name" placeholder="Name your contraption"></div>
-    <div class="document-actions"><button class="button" id="newLevel">＋ New</button><button class="button" id="remixLevel">Remix a level</button><button class="button test-button" id="testLevel">▶ Test &amp; draw</button><div class="save-action"><button class="button ink" id="saveLevel">Save</button><span class="micro" data-cloud-status role="status">Connecting…</span></div></div>
+    <div class="document-actions"><button class="button test-button" id="testLevel">▶ Test &amp; draw</button><button class="button ink" id="saveLevel">Save</button></div>
   </div>
   <main class="workbench">
     <aside class="palette panel" aria-label="Object palette">

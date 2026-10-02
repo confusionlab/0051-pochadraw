@@ -38,7 +38,7 @@
   try { sketchbook = sketchbook.map(l => Kit.validate(l)).slice(0, 100); } catch (e) { sketchbook = []; }
   window.addEventListener('pochadraw:cloud', ({ detail }) => {
     if (detail.key === 'library') {
-      try { sketchbook = detail.value.map(l => Kit.validate(l)); $('#savedCount').textContent = sketchbook.length; if (!$('#studioPanel').hidden && !$('#studioLibrary').hidden) library(); }
+      try { sketchbook = detail.value.map(l => Kit.validate(l)); $('#savedCount').textContent = sketchbook.length; if (!$('#studioPanel').hidden && !$('#studioLibrary').hidden) library(); if (level) syncSaveButton(); }
       catch (e) { notify('A cloud puzzle could not be opened.'); }
     }
   });
@@ -73,11 +73,14 @@
     catch (e) { notify('Could not save to this browser. Free some browser storage and try again.'); return false; }
   }
   function saveToLibrary(quiet) {
+    // Commit an in-progress property edit, including when using Ctrl/Cmd+S.
+    if ($('#editorPanel').contains(document.activeElement)) document.activeElement.blur();
+    if (syncSaveButton()) return true;
     const current = Kit.validate(level), i = sketchbook.findIndex(l => l.id === current.id);
     const old = sketchbook.slice();
     if (i >= 0) sketchbook[i] = current; else if (sketchbook.length >= 100) { notify('Your sketchbook has 100 puzzles. Remove one before adding another.'); return false; } else sketchbook.unshift(current);
     if (!writeLibrary()) { sketchbook = old; return false; }
-    if (!quiet) notify('Saved to your sketchbook.'); return true;
+    syncSaveButton(); return true;
   }
   function preserveDraft() {
     const draft = Kit.read('draft', null);
@@ -116,10 +119,23 @@
     }
   }
   function render() { drawTo(cv, level, selected, $('#showHint').checked); }
+  const editableFields = '#levelName,#levelStory,#levelTip,#levelInk,#levelPaper,[data-field],[data-crayon]';
+  const fieldValue = input => input.type === 'checkbox' ? String(input.checked) : input.value;
+  function syncSaveButton() {
+    const saved = sketchbook.find(item => item.id === level.id);
+    const pendingInput = Array.from($('#editorPanel').querySelectorAll(editableFields)).some(input => fieldValue(input) !== input.dataset.committedValue);
+    const clean = !!saved && !pendingInput && JSON.stringify(saved) === JSON.stringify(level);
+    $('#saveLevel').textContent = clean ? 'Saved' : 'Save';
+    $('#saveLevel').disabled = clean;
+    return clean;
+  }
+  $('#editorPanel').addEventListener('input', syncSaveButton);
   function refresh() {
     sim = new Sim(level, []); render(); settings(); inspector();
     $('#undoEdit').disabled = !history.length; $('#redoEdit').disabled = !future.length;
     $('#showHint').disabled = !level.solution.length;
+    $('#editorPanel').querySelectorAll(editableFields).forEach(input => input.dataset.committedValue = fieldValue(input));
+    syncSaveButton();
   }
   function settings() {
     $('#levelName').value = level.name; $('#levelStory').value = level.story; $('#levelTip').value = level.tip;
@@ -154,6 +170,7 @@
       } else if (!input.value && ['hold','back','label','id','when'].includes(key)) delete object[key];
       else object[key]=key==='fires' ? input.value.split(',').map(s=>s.trim()).filter(Boolean) : input.value;
     }));
+    input.dataset.committedValue = fieldValue(input);
     label.append(input); return label;
   }
   function showProperties(name) {
@@ -264,7 +281,7 @@
   for(const [selector,key] of [['#levelName','name'],['#levelStory','story'],['#levelTip','tip'],['#levelPaper','paper']]) $(selector).onchange=ev=>change(()=>level[key]=ev.target.value,true);
   $('#levelInk').onchange=ev=>change(()=>{level.ink=Number(ev.target.value);level.par=[level.ink*.5,level.ink*.75];if(level.live)level.live.ink=level.ink;});
   $('#selectTool').onclick=()=>setTool('select');$('#undoEdit').onclick=()=>undo(false);$('#redoEdit').onclick=()=>undo(true);$('#showHint').onchange=render;
-  $('#saveLevel').onclick=()=>saveToLibrary();$('#newLevel').onclick=()=>openEditor(Kit.blank());
+  $('#saveLevel').onclick=()=>saveToLibrary();
   function library() {
     const list = $('#libraryList'); list.replaceChildren();
     libraryObserver?.disconnect();

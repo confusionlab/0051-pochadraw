@@ -9,8 +9,9 @@
 .studio .button.ink { color: white; background: var(--green); border-color: var(--green-deep); }
 .document-bar { background: var(--paper); border: none; border-radius: 0; padding: 10px 12px; box-shadow: var(--shadow); margin-bottom: 14px; }
 .document-actions { align-items: center; }
-.save-action { display: flex; align-items: center; gap: 10px; }
-.save-action .micro { margin: 0; font-size: 14px; white-space: nowrap; }
+.studio-create-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+#saveLevel { min-width: 68px; }
+.studio #saveLevel:disabled { opacity: 1; background: #e8efdc; color: var(--green-deep); box-shadow: none; }
 .workbench { background: transparent; border: none; padding: 0; grid-template-columns: 175px minmax(0, 1fr) 240px; gap: 14px; }
 .panel { background: var(--paper); border: none; border-radius: 0; box-shadow: var(--shadow); }
 .panel-heading h2 { font: 700 24px var(--sketch); }
@@ -60,8 +61,6 @@
   .studio .logo { font-size: 28px; }
   .workspace-tabs { margin-left: auto; }
   .document-actions { flex-wrap: wrap; justify-content: flex-start; }
-  .save-action { flex: 1; justify-content: flex-end; }
-  .save-action .micro { font-size: 12px; }
   .browse-heading { flex-wrap: wrap; }
   .levels-browser { padding: 12px; }
   .campaign-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
