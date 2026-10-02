@@ -16,22 +16,24 @@
 <body>
 <div class="studio">
   <header class="top">
-    <a class="logo" href="index.html" aria-label="Pochadraw — play"><span class="w1">Pocha</span><span class="w2">draw</span></a>
+    <h1 class="logo"><span class="w1">Pocha</span><span class="w2">draw</span></h1>
     <nav class="workspace-tabs" role="tablist" aria-label="Workspace">
       <button class="chip" id="tabLevels" role="tab" aria-controls="levelsPanel" aria-selected="false" tabindex="-1">Levels</button>
       <button class="chip" id="tabStudio" role="tab" aria-controls="studioPanel" aria-selected="true">Studio</button>
     </nav>
-    <a class="chip" href="index.html">← Play</a>
   </header>
   <section id="levelsPanel" class="levels-browser" role="tabpanel" aria-labelledby="tabLevels" hidden>
-    <div class="browse-heading"><h1>Levels</h1><label class="world-picker">World <select id="browseWorld"></select></label></div>
-    <div id="campaignList" class="campaign-grid"></div>
-    <div class="browse-heading"><h2>Your levels <span id="savedCount">0</span></h2><button class="chip" id="createLevel">＋ New level</button></div>
-    <div id="libraryList" class="library-list"></div>
+    <div class="browse-heading"><h1>Levels</h1></div>
+    <div id="campaignList" class="campaign-sections"></div>
   </section>
   <section id="studioPanel" role="tabpanel" aria-labelledby="tabStudio">
+    <section id="studioLibrary" class="levels-browser" aria-label="Your created levels">
+      <div class="browse-heading"><h1>Your levels <span id="savedCount">0</span></h1><button class="chip" id="createLevel">＋ New level</button></div>
+      <div id="libraryList" class="library-list"></div>
+    </section>
+    <section id="editorPanel" aria-label="Level editor" hidden>
   <div class="document-bar">
-    <div class="document-name"><span class="doc-icon" aria-hidden="true">▤</span><input id="levelName" maxlength="80" aria-label="Level name" placeholder="Name your contraption"></div>
+    <div class="document-name"><button class="button" id="backToStudio">← Studio</button><span class="doc-icon" aria-hidden="true">▤</span><input id="levelName" maxlength="80" aria-label="Level name" placeholder="Name your contraption"></div>
     <div class="document-actions"><button class="button" id="newLevel">＋ New</button><button class="button" id="remixLevel">Remix a level</button><button class="button test-button" id="testLevel">▶ Test &amp; draw</button><div class="save-action"><button class="button ink" id="saveLevel">Save</button><span class="micro" data-cloud-status role="status">Connecting…</span></div></div>
   </div>
   <main class="workbench">
@@ -57,6 +59,7 @@
       </details>
     </aside>
   </main>
+    </section>
   </section>
 </div>
 <div id="notification" class="notification" role="status" aria-live="polite" hidden></div>

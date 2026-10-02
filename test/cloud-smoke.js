@@ -14,13 +14,15 @@ try {
     call(session, 'wait', '--fn', '!!document.querySelector("#levelName")?.value');
   }
   assert.match(evaluate(sessions[0], 'window.POCHADRAW_CONVEX_URL'), /vibrant-possum-622/);
-  evaluate(sessions[0], 'document.querySelector("#newLevel").click(); true');
+  evaluate(sessions[0], 'document.querySelector("#createLevel").click(); true');
   evaluate(sessions[0], `(() => { const input=document.querySelector('#levelName'); input.value=${JSON.stringify(name)}; input.dispatchEvent(new Event('change')); document.querySelector('#saveLevel').click(); return true; })()`);
   ready(sessions[0]);
   id = evaluate(sessions[0], 'CC.LevelKit.read("draft", null).id');
   call(sessions[1], 'wait', '--fn', `CC.LevelKit.read('library', []).some(l => l.name === ${JSON.stringify(name)})`);
   assert.ok(evaluate(sessions[1], `CC.LevelKit.read('library', []).some(l => l.name === ${JSON.stringify(name)})`));
   call(sessions[1], 'reload'); ready(sessions[1]);
+  assert.equal(evaluate(sessions[1], 'document.querySelector("#studioLibrary").hidden'), false);
+  evaluate(sessions[1], `document.querySelector('[data-level-id="${id}"] .actions button').click(); true`);
   assert.equal(evaluate(sessions[1], 'document.querySelector("#levelName").value'), name);
   console.log('PASS puzzle and draft restored in an independent browser');
   evaluate(sessions[0], `(() => {Object.defineProperty(navigator,'onLine',{get:()=>false,configurable:true});window.dispatchEvent(new Event('offline'));const input=document.querySelector('#levelName');input.value=${JSON.stringify(name + ' offline')};input.dispatchEvent(new Event('change'));document.querySelector('#saveLevel').click();return true;})()`);

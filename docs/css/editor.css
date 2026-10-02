@@ -74,3 +74,21 @@
 
 .select-tool .cursor-icon { width: 20px; height: 24px; flex: 0 0 auto; fill: currentColor; stroke: var(--paper); stroke-width: 1.2; stroke-linejoin: round; }
 .document-actions > .test-button { white-space: nowrap; }
+
+.campaign-sections { display: grid; gap: 26px; }
+.world-section { min-width: 0; scroll-margin-top: 16px; }
+.world-section h2 { font: 700 26px var(--sketch); margin: 0 0 12px; }
+.world-levels { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(210px, 24vw, 260px); gap: 14px; overflow-x: auto; padding: 0 2px 12px; scroll-snap-type: x proximity; scrollbar-color: #9c6f43 #efe7d6; }
+.world-levels .campaign-card { scroll-snap-align: start; display: flex; flex-direction: column; }
+.world-levels .campaign-card .level-actions { margin-top: auto; }
+.world-levels .campaign-card p { margin-bottom: 10px; }
+#studioLibrary .library-list { gap: 12px; }
+#editorPanel .document-name > .button { flex: 0 0 auto; }
+#editorPanel .document-name { gap: 8px; }
+@media (max-width: 640px) {
+  .world-section h2 { font-size: 23px; }
+  .world-levels { grid-auto-columns: 230px; gap: 10px; }
+  .world-levels .level-stars { flex-basis: auto; }
+  #editorPanel .document-name > .button { font-size: 15px; padding: 4px 8px; }
+  #editorPanel .document-name .doc-icon { display: none; }
+}

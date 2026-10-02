@@ -38,7 +38,7 @@
   try { sketchbook = sketchbook.map(l => Kit.validate(l)).slice(0, 100); } catch (e) { sketchbook = []; }
   window.addEventListener('pochadraw:cloud', ({ detail }) => {
     if (detail.key === 'library') {
-      try { sketchbook = detail.value.map(l => Kit.validate(l)); $('#savedCount').textContent = sketchbook.length; if (!$('#levelsPanel').hidden) library(); }
+      try { sketchbook = detail.value.map(l => Kit.validate(l)); $('#savedCount').textContent = sketchbook.length; if (!$('#studioPanel').hidden && !$('#studioLibrary').hidden) library(); }
       catch (e) { notify('A cloud puzzle could not be opened.'); }
     }
   });
@@ -79,7 +79,16 @@
     if (!writeLibrary()) { sketchbook = old; return false; }
     if (!quiet) notify('Saved to your sketchbook.'); return true;
   }
-  function preserveDraft() { if (level.parts.length && !saveToLibrary(true)) return false; return true; }
+  function preserveDraft() {
+    const draft = Kit.read('draft', null);
+    if ((!$('#editorPanel').hidden || draft?.id === level.id) && level.parts.length) {
+      if (!saveToLibrary(true)) return false;
+      clearTimeout(draftTimer);
+      try { Kit.write('draft', level); }
+      catch { notify('Could not keep your draft in this browser. Try saving again.'); return false; }
+    }
+    return true;
+  }
   function setTool(next) {
     tool = next;
     $('#selectTool').setAttribute('aria-pressed', String(next === 'select'));
@@ -219,7 +228,7 @@
   }
   cv.addEventListener('pointerup',()=>finishDrag(false));cv.addEventListener('pointercancel',()=>finishDrag(true));
   window.addEventListener('keydown',ev=>{
-    if(ev.defaultPrevented || $('#studioPanel').hidden || ev.target.closest('input,textarea,select') || document.querySelector('dialog[open]'))return;
+    if(ev.defaultPrevented || $('#studioPanel').hidden || $('#editorPanel').hidden || ev.target.closest('input,textarea,select') || document.querySelector('dialog[open]'))return;
     const mod=ev.ctrlKey||ev.metaKey,key=ev.key.toLowerCase();
     if(mod&&key==='z'){ev.preventDefault();undo(ev.shiftKey);}
     else if(mod&&key==='y'){ev.preventDefault();undo(true);}
@@ -243,66 +252,123 @@
   for(const [selector,key] of [['#levelName','name'],['#levelStory','story'],['#levelTip','tip'],['#levelPaper','paper']]) $(selector).onchange=ev=>change(()=>level[key]=ev.target.value,true);
   $('#levelInk').onchange=ev=>change(()=>{level.ink=Number(ev.target.value);level.par=[level.ink*.5,level.ink*.75];if(level.live)level.live.ink=level.ink;});
   $('#selectTool').onclick=()=>setTool('select');$('#undoEdit').onclick=()=>undo(false);$('#redoEdit').onclick=()=>undo(true);$('#showHint').onchange=render;
-  $('#saveLevel').onclick=()=>saveToLibrary();$('#newLevel').onclick=()=>{if(preserveDraft()){setLevel(Kit.blank());notify('Fresh paper! Your previous draft is in the sketchbook.');}};
+  $('#saveLevel').onclick=()=>saveToLibrary();$('#newLevel').onclick=()=>openEditor(Kit.blank());
   function library() {
-    const list=$('#libraryList');list.replaceChildren();
-    if(!sketchbook.length){const e=document.createElement('div');e.className='empty-library';e.innerHTML='<span aria-hidden="true">▤</span><h3>Your ideas belong here.</h3><p>Save your first contraption and come back to it anytime.</p>';list.append(e);}
-    for(const lv of sketchbook) {
-      const card=document.createElement('article');card.className='saved-card';const text=document.createElement('div');const title=document.createElement('h3');title.textContent=lv.name;
-      const meta=document.createElement('p');meta.textContent=lv.parts.length+' objects · '+(lv.hintVerified?'Solved hint included':lv.solution.length?'Hint included':'No hint yet');text.append(title,meta);
-      const actions=document.createElement('div');actions.className='actions';
-      const edit=document.createElement('button');edit.className='button';edit.textContent='Edit';edit.onclick=()=>{if(preserveDraft()){setLevel(lv);showTab('studio');}};
-      const play=document.createElement('a');play.className='button';play.textContent='Play';play.href='index.html#level='+Kit.encode(lv);
-      const del=document.createElement('button');del.className='text-button danger';del.textContent='×';del.setAttribute('aria-label','Remove '+lv.name+' from sketchbook');
-      del.onclick=()=>{const old=sketchbook;sketchbook=sketchbook.filter(l=>l.id!==lv.id);if(!writeLibrary())sketchbook=old;library();notify('Removed from sketchbook. The open draft is kept.');};
-      actions.append(edit,play,del);card.append(text,actions);list.append(card);
+    const list = $('#libraryList'); list.replaceChildren();
+    const levels = sketchbook.slice();
+    const draft = Kit.read('draft', null);
+    if (draft) {
+      try {
+        const current = Kit.validate(draft), index = levels.findIndex(lv => lv.id === current.id);
+        if (index < 0) levels.unshift(current); else levels[index] = current;
+      } catch { /* Ignore an invalid browser draft. */ }
+    }
+    $('#savedCount').textContent = levels.length;
+    if (!levels.length) {
+      const empty = document.createElement('div'); empty.className = 'empty-library';
+      empty.innerHTML = '<span aria-hidden="true">▤</span><h3>No levels yet</h3><p>Make your first level, or remix one from Levels.</p>';
+      list.append(empty);
+    }
+    for (const lv of levels) {
+      const saved = sketchbook.some(item => item.id === lv.id);
+      const card = document.createElement('article'); card.className = 'saved-card'; card.dataset.levelId = lv.id;
+      const text = document.createElement('div'), title = document.createElement('h3'); title.textContent = lv.name;
+      const meta = document.createElement('p'); meta.textContent = (saved ? '' : 'Draft · ') + lv.parts.length + ' objects · ' + (lv.hintVerified ? 'Solved hint included' : lv.solution.length ? 'Hint included' : 'No hint yet'); text.append(title, meta);
+      const actions = document.createElement('div'); actions.className = 'actions';
+      const edit = document.createElement('button'); edit.className = 'button'; edit.textContent = 'Edit'; edit.onclick = () => openEditor(lv);
+      const play = document.createElement('a'); play.className = 'button'; play.textContent = 'Play'; play.href = 'index.html#level=' + Kit.encode(lv);
+      actions.append(edit, play);
+      if (saved) {
+        const del = document.createElement('button'); del.className = 'text-button danger'; del.textContent = '×'; del.setAttribute('aria-label', 'Remove ' + lv.name + ' from your levels');
+        del.onclick = () => { const old = sketchbook; sketchbook = sketchbook.filter(item => item.id !== lv.id); if (!writeLibrary()) sketchbook = old; library(); notify('Removed from your levels. The editor draft is kept.'); };
+        actions.append(del);
+      }
+      card.append(text, actions); list.append(card);
     }
   }
-  function showTab(name, updateUrl = true) {
+  function updateViewUrl(name, editId) {
+    const url = new URL(location.href); url.searchParams.set('tab', name);
+    for (const key of ['campaign', 'library', 'new', 'edit']) url.searchParams.delete(key);
+    url.hash = '';
+    if (editId) url.searchParams.set('edit', editId);
+    window.history.replaceState(null, '', url);
+  }
+  function showTab(name, updateUrl = true, preserve = true) {
+    if (preserve && !$('#editorPanel').hidden && !preserveDraft()) return;
     const levels = name === 'levels';
     $('#levelsPanel').hidden = !levels; $('#studioPanel').hidden = levels;
+    $('#editorPanel').hidden = true; $('#studioLibrary').hidden = false;
     for (const [id, selected] of [['#tabLevels', levels], ['#tabStudio', !levels]]) {
       $(id).setAttribute('aria-selected', String(selected)); $(id).tabIndex = selected ? 0 : -1;
     }
-    if (levels) { campaignList(); library(); } else render();
-    if (updateUrl) { const url = new URL(location.href); url.searchParams.set('tab', name); window.history.replaceState(null, '', url); }
+    if (levels) campaignList(); else library();
+    if (updateUrl) updateViewUrl(name);
+  }
+  function openEditor(next, preserve = true, updateUrl = true) {
+    if (preserve && !preserveDraft()) return;
+    showTab('studio', false, false);
+    setLevel(next);
+    $('#studioLibrary').hidden = true; $('#editorPanel').hidden = false;
+    if (updateUrl) updateViewUrl('studio', level.id);
+    window.scrollTo({ top: 0 });
   }
   $('#tabLevels').onclick = () => showTab('levels');
   $('#tabStudio').onclick = () => showTab('studio');
+  $('#backToStudio').onclick = () => showTab('studio');
   document.querySelector('.workspace-tabs').addEventListener('keydown', ev => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(ev.key)) return;
     ev.preventDefault();
     const levels = ev.key === 'Home' || (ev.key !== 'End' && $('#tabLevels').getAttribute('aria-selected') !== 'true');
     showTab(levels ? 'levels' : 'studio'); $(levels ? '#tabLevels' : '#tabStudio').focus();
   });
-  function campaignList() {
-    const list = $('#campaignList'); list.replaceChildren();
-    const progress = JSON.parse(localStorage.getItem('pd-game-progress') || '{}');
-    LEVELS.filter(lv => lv.world === Number($('#browseWorld').value)).forEach(lv => {
-      const card = document.createElement('article'); card.className = 'campaign-card';
-      const thumbnail = document.createElement('a'); thumbnail.href = 'index.html?level=' + (lv.n - 1); thumbnail.setAttribute('aria-label', 'Play ' + lv.name);
-      const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 180; canvas.setAttribute('aria-hidden', 'true'); thumbnail.append(canvas);
-      const title = document.createElement('h3'); title.textContent = lv.n + '. ' + lv.name;
-      const goal = document.createElement('p'); goal.textContent = lv.story;
-      const actions = document.createElement('div'); actions.className = 'level-actions';
-      const stars = document.createElement('span'); stars.className = 'level-stars'; stars.textContent = '★'.repeat(progress[lv.id] || 0) + '☆'.repeat(3 - (progress[lv.id] || 0)); stars.setAttribute('aria-label', (progress[lv.id] || 0) + ' stars');
-      const play = document.createElement('a'); play.className = 'button'; play.textContent = 'Play'; play.href = thumbnail.href;
-      const edit = document.createElement('button'); edit.className = 'button'; edit.textContent = 'Edit'; edit.onclick = () => { if (preserveDraft()) { setLevel(Kit.remix(lv)); showTab('studio'); } };
-      actions.append(stars, play, edit); card.append(thumbnail, title, goal, actions); list.append(card); drawTo(canvas, lv);
+  function updateCampaignProgress() {
+    let progress = {};
+    try { progress = JSON.parse(localStorage.getItem('pd-game-progress') || '{}'); } catch { /* Keep the catalog usable with an invalid local cache. */ }
+    document.querySelectorAll('[data-stars-for]').forEach(el => {
+      const stars = Math.max(0, Math.min(3, Number(progress[el.dataset.starsFor]) || 0));
+      el.textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars); el.setAttribute('aria-label', stars + ' stars');
     });
   }
-  WORLDS.forEach((world, i) => { const option = document.createElement('option'); option.value = i; option.textContent = (i + 1) + '. ' + world.name; $('#browseWorld').append(option); });
-  $('#browseWorld').value = Math.max(0, Math.min(WORLDS.length - 1, Number(new URLSearchParams(location.search).get('world')) || 0));
-  $('#browseWorld').onchange = () => { campaignList(); const url = new URL(location.href); url.searchParams.set('world', $('#browseWorld').value); window.history.replaceState(null, '', url); };
-  $('#createLevel').onclick = () => { if (preserveDraft()) { setLevel(Kit.blank()); showTab('studio'); } };
-  window.addEventListener('pochadraw:cloud', ({ detail }) => { if (detail.key === 'progress' && !$('#levelsPanel').hidden) campaignList(); });
+  function campaignList() {
+    const list = $('#campaignList');
+    if (list.childElementCount) { updateCampaignProgress(); return; }
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) if (entry.isIntersecting) {
+        drawTo(entry.target, LEVELS[Number(entry.target.dataset.levelIndex)]); observer.unobserve(entry.target);
+      }
+    }, { rootMargin: '200px' });
+    WORLDS.forEach((world, wi) => {
+      const section = document.createElement('section'); section.className = 'world-section'; section.id = 'world-' + wi;
+      const heading = document.createElement('h2'); heading.id = section.id + '-title'; heading.textContent = (wi + 1) + '. ' + world.name; section.setAttribute('aria-labelledby', heading.id);
+      const row = document.createElement('div'); row.className = 'world-levels'; row.tabIndex = 0; row.setAttribute('aria-label', world.name + ' levels');
+      LEVELS.filter(lv => lv.world === wi).forEach(lv => {
+        const card = document.createElement('article'); card.className = 'campaign-card';
+        const thumbnail = document.createElement('a'); thumbnail.href = 'index.html?level=' + (lv.n - 1); thumbnail.setAttribute('aria-label', 'Play ' + lv.name);
+        const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 180; canvas.dataset.levelIndex = lv.n - 1; canvas.setAttribute('aria-hidden', 'true'); thumbnail.append(canvas);
+        const title = document.createElement('h3'); title.textContent = lv.n + '. ' + lv.name;
+        const goal = document.createElement('p'); goal.textContent = lv.story;
+        const actions = document.createElement('div'); actions.className = 'level-actions';
+        const stars = document.createElement('span'); stars.className = 'level-stars'; stars.dataset.starsFor = lv.id;
+        const play = document.createElement('a'); play.className = 'button'; play.textContent = 'Play'; play.href = thumbnail.href;
+        const remix = document.createElement('button'); remix.className = 'button'; remix.textContent = 'Remix'; remix.onclick = () => openEditor(Kit.remix(lv));
+        actions.append(stars, play, remix); card.append(thumbnail, title, goal, actions); row.append(card); observer.observe(canvas);
+      });
+      section.append(heading, row); list.append(section);
+    });
+    updateCampaignProgress();
+  }
+  $('#createLevel').onclick = () => openEditor(Kit.blank());
+  window.addEventListener('pochadraw:cloud', ({ detail }) => {
+    if (detail.key === 'progress') updateCampaignProgress();
+    if (detail.key === 'draft' && !$('#studioPanel').hidden && !$('#studioLibrary').hidden) library();
+  });
   WORLDS.forEach((world,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+world.name;$('#worldFilter').append(o);});
   function remixList(){
     const list=$('#remixList');list.replaceChildren();
     LEVELS.filter(l=>l.world===Number($('#worldFilter').value)).forEach(lv=>{
       const b=document.createElement('button');b.className='remix-card';const c=document.createElement('canvas');c.width=320;c.height=180;c.setAttribute('aria-hidden','true');
       const name=document.createElement('strong');name.textContent=lv.n+'. '+lv.name;const note=document.createElement('small');note.textContent=(lv.live?'Live puzzle · ':'')+(lv.bossLevel?'Boss · ':'')+lv.parts.length+' objects';b.append(c,name,note);
-      b.onclick=()=>{if(preserveDraft()){setLevel(Kit.remix(lv));$('#remixDialog').close();notify('Remix loaded. The original puzzle stays in the campaign.');}};
+      b.onclick=()=>{openEditor(Kit.remix(lv));$('#remixDialog').close();};
       list.append(b);drawTo(c,lv);
     });
   }
@@ -332,14 +398,24 @@
       closeTest();notify('Winning solution recorded and replay-checked. Save your puzzle to keep it.');
     }catch(e){notify(e.message);}
   };
-  try{
-    const hash=new URLSearchParams(location.hash.slice(1));
-    if(hash.has('level'))level=Kit.decode(hash.get('level'));
-    else if(new URLSearchParams(location.search).has('campaign'))level=Kit.remix(LEVELS[Math.max(0,Math.min(99,Number(new URLSearchParams(location.search).get('campaign'))||0))]);
-    else level=Kit.validate(Kit.read('draft',null)||Kit.blank());
-  }catch(e){level=Kit.blank();notify(e.message);}
-  $('#savedCount').textContent=sketchbook.length;refresh();
-  if (new URLSearchParams(location.search).has('campaign') || new URLSearchParams(location.hash.slice(1)).has('level')) saveDraft();
-  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{CC.clearSprites();cr.pats.clear();render();});
-  showTab(new URLSearchParams(location.search).get('tab') === 'levels' || new URLSearchParams(location.search).has('library') ? 'levels' : 'studio', false);
+  const params = new URLSearchParams(location.search), hash = new URLSearchParams(location.hash.slice(1));
+  const draft = Kit.read('draft', null);
+  try { level = Kit.validate(draft || Kit.blank()); }
+  catch { level = Kit.blank(); }
+  refresh();
+  showTab(params.get('tab') === 'levels' ? 'levels' : 'studio', false);
+  try {
+    if (hash.has('level')) openEditor(Kit.decode(hash.get('level')));
+    else if (params.has('campaign')) openEditor(Kit.remix(LEVELS[Math.max(0, Math.min(99, Number(params.get('campaign')) || 0))]));
+    else if (params.has('new')) openEditor(Kit.blank());
+    else if (params.has('edit')) {
+      const saved = (draft?.id === params.get('edit') ? draft : null) || sketchbook.find(lv => lv.id === params.get('edit'));
+      if (saved) openEditor(saved, false);
+      else notify('This level is no longer in your Studio.');
+    }
+  } catch (e) { notify(e.message); }
+  if (params.get('tab') === 'levels' && Number(params.get('world')) > 0) {
+    requestAnimationFrame(() => document.querySelector('#world-' + Math.max(0, Math.min(WORLDS.length - 1, Number(params.get('world')) || 0)))?.scrollIntoView({ block: 'start' }));
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { CC.clearSprites(); cr.pats.clear(); render(); });
 })();
