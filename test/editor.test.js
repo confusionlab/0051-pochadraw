@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
 const CC = require('./load')(['js/levels.js', 'js/level-kit.js', 'js/editor-tools.js']);
 const { LevelKit: Kit, Sim, LEVELS } = CC;
 test('every campaign puzzle can be remixed without losing its mechanisms or answer', () => {
@@ -82,4 +84,22 @@ test('new machinery rejects invalid geometry and release settings', () => {
   for(const part of [{type:'wire',from:[1,2],to:[null,3]},{type:'arrow',pts:[[1,2]]},{type:'conveyor',x1:4,x2:2,y:3},{type:'dispenser',kind:'hen',x1:2,x2:2,y:2,count:3},{type:'boss',x:2,y:2,w:1,h:1,hp:-1},{type:'dispenser',x:2,y:2,count:3,every:0}]){
     const level=Kit.blank();level.parts.push(part);assert.throws(()=>Kit.validate(level),part.type);
   }
+});
+test('deleting a project clears its saved version and matching draft without touching another draft', () => {
+  const storage=new Map(),deleted=[];
+  const context=vm.createContext({CC:{Cloud:{deletePuzzle:id=>deleted.push(id)}},localStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)}});
+  vm.runInContext(fs.readFileSync('js/level-kit.js','utf8'),context);
+  const kit=context.CC.LevelKit;
+  storage.set('pochadraw-library',JSON.stringify([{id:'pd-delete'},{id:'pd-keep'}]));
+  storage.set('pochadraw-draft',JSON.stringify({id:'pd-delete',name:'Edited draft'}));
+  kit.deleteLevel('pd-delete');
+  assert.deepEqual(JSON.parse(storage.get('pochadraw-library')),[{id:'pd-keep'}]);
+  assert.equal(JSON.parse(storage.get('pochadraw-draft')),null);
+  storage.set('pochadraw-draft',JSON.stringify({id:'pd-other'}));
+  kit.deleteLevel('pd-keep');
+  assert.deepEqual(JSON.parse(storage.get('pochadraw-draft')),{id:'pd-other'});
+  assert.deepEqual(deleted,['pd-delete','pd-keep']);
+  kit.deleteLevel('pd-other');
+  assert.equal(JSON.parse(storage.get('pochadraw-draft')),null);
+  assert.equal(deleted.at(-1),'pd-other');
 });

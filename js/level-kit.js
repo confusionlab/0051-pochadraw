@@ -130,5 +130,18 @@
   }
   function read(key, fallback) { try { return JSON.parse(localStorage.getItem('pochadraw-' + key)) ?? fallback; } catch (e) { return fallback; } }
   function write(key, value) { localStorage.setItem('pochadraw-' + key, JSON.stringify(value)); CC.Cloud?.write('pochadraw-' + key, value); }
-  CC.LevelKit = { clone, uid, crayons, papers, validate, remix, blank, bounds, move, encode, decode, read, write };
+  function deleteLevel(id) {
+    const library = read('library', []).filter(item => item.id !== id), draft = read('draft', null);
+    const keys = ['pochadraw-library', 'pochadraw-draft'], previous = keys.map(key => localStorage.getItem(key));
+    try {
+      localStorage.setItem(keys[0], JSON.stringify(library));
+      if (draft?.id === id) localStorage.setItem(keys[1], 'null');
+    } catch (error) {
+      keys.forEach((key, i) => { try { if (previous[i] === null) localStorage.removeItem(key); else localStorage.setItem(key, previous[i]); } catch { /* Preserve the original storage error. */ } });
+      throw error;
+    }
+    CC.Cloud?.deletePuzzle(id);
+    return library;
+  }
+  CC.LevelKit = { clone, uid, crayons, papers, validate, remix, blank, bounds, move, encode, decode, read, write, deleteLevel };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -73,6 +73,11 @@
   </section>
 </div>
 <div id="notification" class="notification" role="status" aria-live="polite" hidden></div>
+<dialog id="deleteDialog" class="modal delete-modal" aria-labelledby="deleteTitle" aria-describedby="deleteWarning">
+  <div class="modal-heading"><h2 id="deleteTitle">Delete level?</h2></div>
+  <p id="deleteWarning">This will permanently delete <strong id="deleteLevelName"></strong>, including its saved version and draft. This cannot be undone.</p>
+  <div class="modal-actions"><button class="button" data-close autofocus>Cancel</button><button class="button danger" id="confirmDelete">Delete</button></div>
+</dialog>
 <dialog id="remixDialog" class="modal wide"><div class="modal-heading"><div><p class="eyebrow">A LITTLE HEAD START</p><h2>Make it your own.</h2></div><button class="icon-button" data-close aria-label="Close level picker">×</button></div><label class="field">Choose a world<select id="worldFilter"></select></label><div id="remixList" class="remix-grid"></div></dialog>
 <dialog id="testDialog" class="test-modal"><div class="preview-heading"><div><p class="eyebrow">PLAYTEST</p><strong id="testTitle"></strong></div><span id="testStatus">Draw your solution, then press GO.</span><button class="button" id="recordHint" hidden>Keep this solution as a hint</button><button class="button ink" id="backToEditor">← Back to editing</button></div><iframe id="playFrame" title="Playtest your contraption"></iframe></dialog>
 <script src="vendor/planck-1.4.2.js"></script>

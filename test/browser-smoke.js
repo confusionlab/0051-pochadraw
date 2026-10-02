@@ -101,6 +101,28 @@ try {
   assert.ok(evalJS('document.documentElement.scrollWidth <= innerWidth'));
   assert.ok(evalJS('document.querySelector("#editorCanvas").getBoundingClientRect().width > 250'));
   console.log('PASS mobile layout has no horizontal overflow');
+  const deletedId=state().id;
+  click('#btnHome');
+  const beforeDelete=evalJS('CC.LevelKit.read("library",[]).map(l=>l.id)');
+  const deleteSelector=`[data-level-id="${deletedId}"] .actions .danger`;
+  assert.equal(evalJS(`document.querySelector(${JSON.stringify(deleteSelector)}).textContent`),'Delete');
+  click(deleteSelector);
+  assert.equal(evalJS('document.querySelector("#deleteDialog").open'),true);
+  assert.equal(evalJS('(()=>{const r=document.querySelector("#deleteDialog").getBoundingClientRect();return r.left>=0&&r.right<=innerWidth})()'),true);
+  assert.equal(evalJS('document.activeElement.textContent'),'Cancel');
+  click('#deleteDialog [data-close]');
+  assert.equal(evalJS(`CC.LevelKit.read('library',[]).some(l=>l.id===${JSON.stringify(deletedId)})`),true);
+  assert.equal(state().id,deletedId);
+  click(deleteSelector);browser('press','Escape');
+  assert.equal(evalJS('document.querySelector("#deleteDialog").open'),false);
+  click(deleteSelector);click('#confirmDelete');settle();
+  assert.equal(state(),null);
+  assert.deepEqual(evalJS('CC.LevelKit.read("library",[]).map(l=>l.id)'),beforeDelete.filter(id=>id!==deletedId));
+  browser('reload');settle();
+  assert.equal(evalJS(`!!document.querySelector('[data-level-id="${deletedId}"]')`),false);
+  click('#createLevel');settle();click('#btnHome');settle();
+  assert.equal(evalJS(`!!document.querySelector('[data-level-id="${deletedId}"]')`),false);
+  console.log('PASS Delete confirmation, Cancel, Escape, matching draft removal and no resurrection after reload or creating another level');
   const errors=browser('errors');assert.ok(!errors,errors);
   console.log('PASS no browser errors');
 } finally { browser('close'); }

@@ -6,7 +6,7 @@ const sessions = ['pochadraw-cloud-a', 'pochadraw-cloud-b'];
 const call = (session, ...args) => execFileSync('npx', ['--yes', 'agent-browser', '--session', session, ...args], { encoding: 'utf8', timeout: 60000 }).trim();
 const evaluate = (session, code) => JSON.parse(call(session, 'eval', code));
 const ready = session => call(session, 'wait', '--fn', 'window.CC?.Cloud?.status === "Saved to cloud" && !!document.querySelector("#levelName")?.value');
-let id;
+let id, originalDraft;
 const name = 'Cloud test ' + Date.now();
 try {
   for (const session of sessions) {
@@ -14,6 +14,7 @@ try {
     call(session, 'wait', '--fn', '!!document.querySelector("#levelName")?.value');
   }
   assert.match(evaluate(sessions[0], 'window.POCHADRAW_CONVEX_URL'), /vibrant-possum-622/);
+  originalDraft=evaluate(sessions[0], `(async()=>{const rows=await CC.Cloud.client.query('workspace:snapshot',{});return JSON.parse(rows.find(r=>r.key==='draft')?.json||'null');})()`);
   evaluate(sessions[0], 'document.querySelector("#createLevel").click(); true');
   evaluate(sessions[0], `(() => { const input=document.querySelector('#levelName'); input.value=${JSON.stringify(name)}; input.dispatchEvent(new Event('change')); document.querySelector('#saveLevel').click(); return true; })()`);
   ready(sessions[0]);
@@ -46,9 +47,32 @@ try {
     assert.equal(rejected, true);
   }
   console.log('PASS best-score merge, invalid scores and temporary-save rejection');
-  evaluate(sessions[0], `(async () => {await CC.Cloud.client.mutation('workspace:savePuzzle',{key:${JSON.stringify(id)},json:null});return true;})()`);
+  evaluate(sessions[0], 'document.querySelector("#btnHome").click();true');
+  evaluate(sessions[0], `document.querySelector('[data-level-id="${id}"] .danger').click();true`);
+  assert.equal(evaluate(sessions[0], 'document.querySelector("#deleteDialog").open'),true);
+  evaluate(sessions[0], 'document.querySelector("#deleteDialog [data-close]").click();true');
+  assert.equal(evaluate(sessions[0], `CC.LevelKit.read('library',[]).some(l=>l.id===${JSON.stringify(id)})`),true);
+  evaluate(sessions[0], `document.querySelector('[data-level-id="${id}"] .danger').click();document.querySelector('#confirmDelete').click();true`);
+  ready(sessions[0]);
   call(sessions[1], 'wait', '--fn', `!CC.LevelKit.read('library', []).some(l => l.id === ${JSON.stringify(id)})`);
-  console.log('PASS deletion syncs between browsers');
+  call(sessions[1], 'wait', '--fn', `CC.LevelKit.read('draft', null)?.id !== ${JSON.stringify(id)}`);
+  assert.equal(evaluate(sessions[1], 'document.querySelector("#editorPanel").hidden'),true);
+  const deleted=evaluate(sessions[0], `(async()=>{const rows=await CC.Cloud.client.query('workspace:snapshot',{});return {project:await CC.Cloud.client.query('workspace:getPuzzle',{key:${JSON.stringify(id)}}),draft:JSON.parse(rows.find(r=>r.key==='draft')?.json||'null')};})()`);
+  assert.equal(deleted.project,null);assert.equal(deleted.draft,null);
+  call(sessions[1],'reload');ready(sessions[1]);
+  assert.equal(evaluate(sessions[1], `!!document.querySelector('[data-level-id="${id}"]')`),false);
+  console.log('PASS confirmed deletion clears project and draft across browsers, including after reload');
+  const draftDeletion=evaluate(sessions[0], `(async()=>{
+    const draft=CC.LevelKit.blank();draft.name='Draft-only deletion test';
+    await CC.Cloud.client.mutation('workspace:saveState',{key:'draft',json:JSON.stringify(draft)});
+    await CC.Cloud.client.mutation('workspace:savePuzzle',{key:${JSON.stringify(id)},json:null});
+    const before=await CC.Cloud.client.query('workspace:snapshot',{});
+    await CC.Cloud.client.mutation('workspace:savePuzzle',{key:draft.id,json:null});
+    const after=await CC.Cloud.client.query('workspace:snapshot',{});
+    return {kept:JSON.parse(before.find(r=>r.key==='draft').json)?.id===draft.id,cleared:JSON.parse(after.find(r=>r.key==='draft').json)===null};
+  })()`);
+  assert.deepEqual(draftDeletion,{kept:true,cleared:true});
+  console.log('PASS cloud deletion keeps another project’s draft and removes a draft-only project');
   call(sessions[0], 'open', new URL('index.html', base).href);
   call(sessions[0], 'wait', '--fn', '!!window.CCDBG && CC.Cloud.status === "Saved to cloud"');
   evaluate(sessions[0], `(() => {
@@ -69,5 +93,6 @@ try {
   console.log('PASS actual gameplay drawings and navigation stay local');
   for (const session of sessions) assert.equal(call(session, 'errors'), '');
 } finally {
+  if(id)try{evaluate(sessions[0], `(async()=>{await CC.Cloud.client.mutation('workspace:savePuzzle',{key:${JSON.stringify(id)},json:null});${originalDraft ? `await CC.Cloud.client.mutation('workspace:saveState',{key:'draft',json:${JSON.stringify(JSON.stringify(originalDraft))}});` : ''}return true;})()`);}catch{}
   for (const session of sessions) try { call(session, 'close'); } catch {}
 }

@@ -107,3 +107,9 @@
 .palette > .panel-heading, .palette > .select-tool { flex-shrink: 0; }
 .palette-grid { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
 @media(max-width:560px) { .palette { max-height: none; } .palette-grid { overflow: visible; } }
+
+.delete-modal { max-width: min(480px, calc(100vw - 28px)); background: var(--paper); border: 2px solid var(--desk-ink); border-radius: var(--hand-radius); }
+.delete-modal p { font-size: 18px; overflow-wrap: anywhere; }
+.delete-modal .modal-actions { justify-content: flex-end; }
+.delete-modal .button { font: 17px/1.35 var(--hand); border: 2px solid var(--desk-ink); border-radius: var(--hand-radius); box-shadow: 2px 3px 0 #3a261659; }
+.delete-modal #confirmDelete { background: var(--red); border-color: #9a3023; color: white; }

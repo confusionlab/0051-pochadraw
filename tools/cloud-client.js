@@ -6,13 +6,13 @@ const url = window.POCHADRAW_CONVEX_URL;
 const cacheKeys = { draft: 'pochadraw-draft', progress: 'pd-game-progress' };
 const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
 const put = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* cloud remains available if cache is full */ } };
-const emit = (key, value) => window.dispatchEvent(new CustomEvent('pochadraw:cloud', { detail: { key, value } }));
+const emit = (key, value, previous) => window.dispatchEvent(new CustomEvent('pochadraw:cloud', { detail: { key, value, previous } }));
 const status = (message) => {
   Cloud.status = message;
   document.querySelectorAll('[data-cloud-status]').forEach(el => el.textContent = message);
 };
 const preview = new URLSearchParams(location.search).has('preview');
-const Cloud = CC.Cloud = { enabled: !!url && !preview, ready: Promise.resolve(), status: url && !preview ? 'Connecting…' : 'Saved in this browser', write() {}, flush: async () => {} };
+const Cloud = CC.Cloud = { enabled: !!url && !preview, ready: Promise.resolve(), status: url && !preview ? 'Connecting…' : 'Saved in this browser', write() {}, deletePuzzle() {}, flush: async () => {} };
 if (Cloud.enabled) {
   const client = new ConvexClient(url);
   Cloud.client = client;
@@ -32,8 +32,10 @@ if (Cloud.enabled) {
     for (const { key, json } of rows) {
       if (!Object.hasOwn(cacheKeys, key) || Object.hasOwn(pending, 'state:' + key)) continue;
       const value = JSON.parse(json);
+      if (key === 'draft' && value?.id && pending['puzzle:' + value.id] === null) continue;
+      const previous = read(cacheKeys[key], null);
       put(cacheKeys[key], value);
-      emit(key, value);
+      emit(key, value, previous);
     }
   }
   async function applyLibrary(rows) {
@@ -64,12 +66,22 @@ if (Cloud.enabled) {
       if (state) enqueue('state:' + state, JSON.stringify(value));
     }
   };
+  Cloud.deletePuzzle = id => {
+    // A draft-only level also needs a delete queued, and a pending draft must
+    // not upload again after the matching project is removed.
+    if (pending['state:draft'] && JSON.parse(pending['state:draft'])?.id === id) delete pending['state:draft'];
+    library = library.filter(level => level.id !== id);
+    put('pochadraw-library', library);
+    if (read(cacheKeys.draft, null)?.id === id) put(cacheKeys.draft, null);
+    enqueue('puzzle:' + id, null);
+  };
   async function flush() {
     retry = null;
     if (!hydrated || flushing || !navigator.onLine) { if (!navigator.onLine) status('Offline · saved here'); return; }
     flushing = true;
     try {
       for (const key of Object.keys(pending)) {
+        if (!Object.hasOwn(pending, key)) continue;
         const value = pending[key];
         if (key.startsWith('puzzle:')) await client.mutation(api.workspace.savePuzzle, { key: key.slice(7), json: value });
         else await client.mutation(api.workspace.saveState, { key: key.slice(6), json: value });
@@ -96,6 +108,7 @@ if (Cloud.enabled) {
     if (!read(migratedKey, false)) {
       const remote = new Map(states.map(row => [row.key, JSON.parse(row.json)]));
       for (const [key, value] of Object.entries(localStates)) if (value && !Object.hasOwn(pending, 'state:' + key)) {
+        if (key === 'draft' && pending['puzzle:' + value.id] === null) continue;
         if (!remote.has(key)) enqueue('state:' + key, JSON.stringify(value));
         else if (key === 'progress') {
           const merged = { ...remote.get(key) };

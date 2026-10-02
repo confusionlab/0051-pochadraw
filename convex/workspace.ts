@@ -72,6 +72,10 @@ export const savePuzzle = mutation({
     const existing = await ctx.db.query("puzzles").withIndex("by_key", q => q.eq("key", key)).unique();
     if (json === null) {
       if (existing) await ctx.db.delete(existing._id);
+      const draft = await ctx.db.query("state").withIndex("by_key", q => q.eq("key", "draft")).unique();
+      // Keep an empty state value so connected browsers clear their cached
+      // draft as well. An unrelated draft belongs to a different project.
+      if (draft && JSON.parse(draft.json)?.id === key) await ctx.db.patch(draft._id, { json: "null" });
       return null;
     }
     const value = puzzle(json);

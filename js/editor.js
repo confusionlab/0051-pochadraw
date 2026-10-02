@@ -26,11 +26,20 @@
   const names = {rubber:'Standard',tennis:'Bouncy',marble:'Marble',bowling:'Heavy',beach:'Light',steel:'Steel',egg:'Fragile',meatball:'Soft',ball:'Any Pochaco',any:'Any moving object',grumbox:'Grumbox',knight:'Sir Tipsy',jelly:'Boingo',cloud:'Nimbus',eater:'Scribble Eater',clock:'Tick-Tock',snail:'Turbo Snail',robot:'Magneto',king:'The Chaos King',dragon:'The Crayon Dragon',tube:'Dispenser',hen:'Hen',cannon:'Repeating cannon'};
   let level, selected = -1, tool = 'select', history = [], future = [], sim, drag = null, noteTimer, draftTimer, capture = null, libraryObserver, homeTab = 'studio';
   let sketchbook = Kit.read('library', []);
+  let pendingDelete = null;
   if (!Array.isArray(sketchbook)) sketchbook = [];
   try { sketchbook = sketchbook.map(l => Kit.validate(l)).slice(0, 100); } catch (e) { sketchbook = []; }
   window.addEventListener('pochadraw:cloud', ({ detail }) => {
     if (detail.key === 'library') {
-      try { sketchbook = detail.value.map(l => Kit.validate(l)); $('#savedCount').textContent = sketchbook.length; if (!$('#studioPanel').hidden && !$('#studioLibrary').hidden) library(); if (level) syncSaveButton(); }
+      try {
+        const next = detail.value.map(l => Kit.validate(l));
+        const deletedCurrent = level && sketchbook.some(l => l.id === level.id) && !next.some(l => l.id === level.id);
+        sketchbook = next;
+        if (deletedCurrent) { Kit.deleteLevel(level.id); forgetCurrentLevel(level.id); notify('This level was deleted.'); }
+        $('#savedCount').textContent = sketchbook.length;
+        if (!$('#studioPanel').hidden && !$('#studioLibrary').hidden) library();
+        if (level) syncSaveButton();
+      }
       catch (e) { notify('A cloud puzzle could not be opened.'); }
     }
   });
@@ -42,6 +51,12 @@
       try { Kit.write('draft', level); }
       catch (e) { notify('Browser storage is full or unavailable. Free some browser storage and try saving again.'); }
     }, 200);
+  }
+  function forgetCurrentLevel(id) {
+    if (level?.id !== id) return;
+    clearTimeout(draftTimer);
+    level = Kit.blank(); selected = -1; history = []; future = []; refresh();
+    if (!$('#editorPanel').hidden) showTab('studio', true, false);
   }
   function remember(before) { history.push(before); if (history.length > 70) history.shift(); future = []; }
   function change(fn, keepHint) {
@@ -362,15 +377,24 @@
       const edit = document.createElement('button'); edit.className = 'button'; edit.textContent = 'Edit'; edit.onclick = () => openEditor(lv);
       const play = document.createElement('a'); play.className = 'button'; play.textContent = 'Play'; play.href = thumbnail.href;
       actions.append(edit, play);
-      if (saved) {
-        const del = document.createElement('button'); del.className = 'text-button danger'; del.textContent = '×'; del.setAttribute('aria-label', 'Remove ' + lv.name + ' from your levels');
-        del.onclick = () => { const old = sketchbook; sketchbook = sketchbook.filter(item => item.id !== lv.id); if (!writeLibrary()) sketchbook = old; library(); notify('Removed from your levels. The editor draft is kept.'); };
-        actions.append(del);
-      }
+      const del = document.createElement('button'); del.className = 'button danger'; del.textContent = 'Delete'; del.setAttribute('aria-label', 'Delete ' + lv.name);
+      del.onclick = () => { pendingDelete = lv.id; $('#deleteLevelName').textContent = lv.name; $('#deleteDialog').showModal(); };
+      actions.append(del);
       card.append(thumbnail, title, goal, meta, actions); list.append(card);
       previews.set(canvas, lv); libraryObserver.observe(canvas);
     }
   }
+  $('#deleteDialog').addEventListener('close', () => pendingDelete = null);
+  $('#confirmDelete').onclick = () => {
+    if (!pendingDelete) return;
+    const id = pendingDelete;
+    try {
+      sketchbook = Kit.deleteLevel(id);
+      forgetCurrentLevel(id);
+      library(); $('#deleteDialog').close(); $('#createLevel').focus();
+      notify('Level deleted.');
+    } catch { notify('Could not delete this level. Please try again.'); }
+  };
   function updateViewUrl(name, editId) {
     const url = new URL(location.href); url.searchParams.set('tab', name);
     for (const key of ['campaign', 'library', 'new', 'edit', 'from']) url.searchParams.delete(key);
@@ -448,7 +472,10 @@
   $('#createLevel').onclick = () => openEditor(Kit.blank());
   window.addEventListener('pochadraw:cloud', ({ detail }) => {
     if (detail.key === 'progress') updateCampaignProgress();
-    if (detail.key === 'draft' && !$('#studioPanel').hidden && !$('#studioLibrary').hidden) library();
+    if (detail.key === 'draft') {
+      if (detail.value === null && detail.previous?.id === level?.id) forgetCurrentLevel(level.id);
+      if (!$('#studioPanel').hidden && !$('#studioLibrary').hidden) library();
+    }
   });
   WORLDS.forEach((world,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+world.name;$('#worldFilter').append(o);});
   function remixList(){

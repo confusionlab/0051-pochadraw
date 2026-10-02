@@ -19,6 +19,7 @@ Draw the missing parts of a machine and press **GO**. Seven crayons have differe
 - Undo/redo edits. Drafts save automatically; **Save** keeps a named puzzle. Starting or loading another puzzle keeps your previous draft in the sketchbook.
 - **Play** uses the original game and physics. Complete the puzzle, then keep your winning drawing as a hint. The studio replays the drawing before accepting it.
 - Play saved puzzles from the Studio library.
+- Delete a level from Studio after confirming the warning. Deletion removes its saved version and matching draft from browser storage and the cloud.
 
 Home opens a shared workspace with **Levels** and **Studio** tabs. Levels groups the campaign into ten world sections with responsive puzzle grids that wrap into rows. Play a campaign puzzle or choose Remix to make a separate copy; the originals stay unchanged. Studio lists your created levels in the same wrapping grid, with a preview of each puzzle. New level and Edit open the editor. All views share the game’s wood background, top bar and paper controls. The editor’s Save button reads Saved when there are no changes. Home in the player and editor returns to the Levels or Studio tab that opened the level, including after a reload.
 
