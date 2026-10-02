@@ -93,6 +93,7 @@
   #editorPanel .document-name .doc-icon { display: none; }
 }
 
+.inspector.panel { display: block; }
 .properties-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
 .properties-tabs .button { flex: 1; }
 .properties-tabs .button[aria-selected="true"] { background: var(--sticky); }
