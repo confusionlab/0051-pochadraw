@@ -26,7 +26,7 @@ try {
   click('.object-actions .danger');settle();assert.equal(state().parts.length,4);
   console.log('PASS place, select, drag, duplicate, delete, undo and redo');
   click('#tabLevels');
-  assert.equal(evalJS('document.querySelectorAll(".campaign-card").length'),100);
+  assert.equal(evalJS('document.querySelectorAll("#campaignList .campaign-card").length'),100);
   assert.equal(evalJS('document.querySelectorAll(".world-section").length'),10);
   assert.equal(evalJS('Array.from(document.querySelectorAll(".world-levels")).every(r=>r.children.length===10 && r.scrollWidth<=r.clientWidth && r.lastElementChild.getBoundingClientRect().top>r.firstElementChild.getBoundingClientRect().top)'),true);
   assert.equal(evalJS('!!document.querySelector("#browseWorld,header.top a")'),false);
@@ -65,11 +65,11 @@ try {
   assert.equal(evalJS('document.querySelector("#studioLibrary").hidden'),false);
   assert.equal(evalJS('document.querySelector("#editorPanel").hidden'),true);
   assert.equal(evalJS(`localStorage.getItem('campaign-original')===JSON.stringify(CC.LEVELS[0])`),true);
-  click('.saved-card .actions button');
+  click('.studio-card .actions button');
   assert.equal(evalJS('document.querySelector("#editorPanel").hidden'),false);
   click('#backToStudio');
-  const share=evalJS('document.querySelector(".saved-card .actions a").href');
-  assert.equal(evalJS('CC.LevelKit.decode(new URL(document.querySelector(".saved-card .actions a").href).hash.slice(7)).name'),'포차 ✎ café');
+  const share=evalJS('document.querySelector(".studio-card .actions a").href');
+  assert.equal(evalJS('CC.LevelKit.decode(new URL(document.querySelector(".studio-card .actions a").href).hash.slice(7)).name'),'포차 ✎ café');
   console.log('PASS compact editor controls and saved puzzle play link');
   const sharedPreview=new URL(share);sharedPreview.searchParams.set('preview','1');
   browser('open',sharedPreview.href);browser('wait','--load','networkidle');
@@ -80,7 +80,7 @@ try {
   console.log('PASS shared link opens as a playable custom puzzle');
   browser('open',new URL('editor.html?preview=1',base).href);
   browser('set','viewport','390','844');settle();
-  click('.saved-card .actions button');settle();
+  click('.studio-card .actions button');settle();
   assert.ok(evalJS('document.documentElement.scrollWidth <= innerWidth'));
   assert.ok(evalJS('document.querySelector("#editorCanvas").getBoundingClientRect().width > 250'));
   console.log('PASS mobile layout has no horizontal overflow');

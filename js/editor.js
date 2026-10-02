@@ -32,7 +32,7 @@
     button: ['x','y','w','angle','id','fires'], cannon: ['x','y','angle','speed','when'], star: ['x','y','r']
   };
   const labels = { x:'X position', y:'Y position', x1:'Start X', y1:'Start Y', x2:'End X', y2:'End Y', r:'Radius', w:'Width', h:'Height', t:'Thickness', len:'Length', n:'Count', baseY:'Base Y', bounce:'Bounciness', angle:'Angle (degrees)', rot:'Text angle (degrees)', gap:'Spacing', style:'Material', hold:'Release', when:'Triggered by', back:'Tall side', backH:'Side height', on:'Always on', you:'Player label', text:'Text', size:'Size', label:'Caption letter', id:'Mechanism ID', fires:'Activates IDs', dir:'Direction', power:'Power', speed:'Speed', reach:'Reach' };
-  let level, selected = -1, tool = 'select', history = [], future = [], sim, drag = null, noteTimer, draftTimer, capture = null;
+  let level, selected = -1, tool = 'select', history = [], future = [], sim, drag = null, noteTimer, draftTimer, capture = null, libraryObserver;
   let sketchbook = Kit.read('library', []);
   if (!Array.isArray(sketchbook)) sketchbook = [];
   try { sketchbook = sketchbook.map(l => Kit.validate(l)).slice(0, 100); } catch (e) { sketchbook = []; }
@@ -267,6 +267,13 @@
   $('#saveLevel').onclick=()=>saveToLibrary();$('#newLevel').onclick=()=>openEditor(Kit.blank());
   function library() {
     const list = $('#libraryList'); list.replaceChildren();
+    libraryObserver?.disconnect();
+    const previews = new Map();
+    libraryObserver = new IntersectionObserver(entries => {
+      for (const entry of entries) if (entry.isIntersecting) {
+        drawTo(entry.target, previews.get(entry.target)); previews.delete(entry.target); libraryObserver.unobserve(entry.target);
+      }
+    }, { rootMargin: '200px' });
     const levels = sketchbook.slice();
     const draft = Kit.read('draft', null);
     if (draft) {
@@ -283,19 +290,23 @@
     }
     for (const lv of levels) {
       const saved = sketchbook.some(item => item.id === lv.id);
-      const card = document.createElement('article'); card.className = 'saved-card'; card.dataset.levelId = lv.id;
-      const text = document.createElement('div'), title = document.createElement('h3'); title.textContent = lv.name;
-      const meta = document.createElement('p'); meta.textContent = (saved ? '' : 'Draft · ') + lv.parts.length + ' objects · ' + (lv.hintVerified ? 'Solved hint included' : lv.solution.length ? 'Hint included' : 'No hint yet'); text.append(title, meta);
-      const actions = document.createElement('div'); actions.className = 'actions';
+      const card = document.createElement('article'); card.className = 'studio-card campaign-card'; card.dataset.levelId = lv.id;
+      const thumbnail = document.createElement('a'); thumbnail.href = 'index.html#level=' + Kit.encode(lv); thumbnail.setAttribute('aria-label', 'Play ' + lv.name);
+      const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 180; canvas.setAttribute('aria-hidden', 'true'); thumbnail.append(canvas);
+      const title = document.createElement('h3'); title.textContent = lv.name;
+      const goal = document.createElement('p'); goal.textContent = lv.story;
+      const meta = document.createElement('p'); meta.className = 'studio-meta'; meta.textContent = (saved ? '' : 'Draft · ') + lv.parts.length + ' objects · ' + (lv.hintVerified ? 'Solved hint included' : lv.solution.length ? 'Hint included' : 'No hint yet');
+      const actions = document.createElement('div'); actions.className = 'actions level-actions';
       const edit = document.createElement('button'); edit.className = 'button'; edit.textContent = 'Edit'; edit.onclick = () => openEditor(lv);
-      const play = document.createElement('a'); play.className = 'button'; play.textContent = 'Play'; play.href = 'index.html#level=' + Kit.encode(lv);
+      const play = document.createElement('a'); play.className = 'button'; play.textContent = 'Play'; play.href = thumbnail.href;
       actions.append(edit, play);
       if (saved) {
         const del = document.createElement('button'); del.className = 'text-button danger'; del.textContent = '×'; del.setAttribute('aria-label', 'Remove ' + lv.name + ' from your levels');
         del.onclick = () => { const old = sketchbook; sketchbook = sketchbook.filter(item => item.id !== lv.id); if (!writeLibrary()) sketchbook = old; library(); notify('Removed from your levels. The editor draft is kept.'); };
         actions.append(del);
       }
-      card.append(text, actions); list.append(card);
+      card.append(thumbnail, title, goal, meta, actions); list.append(card);
+      previews.set(canvas, lv); libraryObserver.observe(canvas);
     }
   }
   function updateViewUrl(name, editId) {
@@ -352,7 +363,7 @@
     WORLDS.forEach((world, wi) => {
       const section = document.createElement('section'); section.className = 'world-section'; section.id = 'world-' + wi;
       const heading = document.createElement('h2'); heading.id = section.id + '-title'; heading.textContent = (wi + 1) + '. ' + world.name; section.setAttribute('aria-labelledby', heading.id);
-      const row = document.createElement('div'); row.className = 'world-levels'; row.setAttribute('aria-label', world.name + ' levels');
+      const row = document.createElement('div'); row.className = 'world-levels level-grid'; row.setAttribute('aria-label', world.name + ' levels');
       LEVELS.filter(lv => lv.world === wi).forEach(lv => {
         const card = document.createElement('article'); card.className = 'campaign-card';
         const thumbnail = document.createElement('a'); thumbnail.href = 'index.html?level=' + (lv.n - 1); thumbnail.setAttribute('aria-label', 'Play ' + lv.name);

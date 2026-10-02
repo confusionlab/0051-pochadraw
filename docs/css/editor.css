@@ -78,16 +78,19 @@
 .campaign-sections { display: grid; gap: 26px; }
 .world-section { min-width: 0; scroll-margin-top: 16px; }
 .world-section h2 { font: 700 26px var(--sketch); margin: 0 0 12px; }
-.world-levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 14px; }
-.world-levels .campaign-card { display: flex; flex-direction: column; }
-.world-levels .campaign-card .level-actions { margin-top: auto; }
-.world-levels .campaign-card p { margin-bottom: 10px; }
-#studioLibrary .library-list { gap: 12px; }
+.level-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 14px; }
+.level-grid .campaign-card { display: flex; flex-direction: column; }
+.level-grid .campaign-card .level-actions { margin-top: auto; }
+.level-grid .campaign-card p { margin-bottom: 10px; }
+.level-grid .empty-library { grid-column: 1 / -1; }
+.studio-card .actions { margin-top: auto; }
+.studio-card .studio-meta { font-size: 13px; }
+.studio-card .actions .danger { margin-left: auto; padding: 2px 5px; color: var(--red-ink); }
 #editorPanel .document-name > .button { flex: 0 0 auto; }
 #editorPanel .document-name { gap: 8px; }
 @media (max-width: 640px) {
   .world-section h2 { font-size: 23px; }
-  .world-levels { gap: 10px; }
+  .level-grid { gap: 10px; }
   .world-levels .level-stars { flex-basis: auto; }
   #editorPanel .document-name > .button { font-size: 15px; padding: 4px 8px; }
   #editorPanel .document-name .doc-icon { display: none; }
