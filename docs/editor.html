@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#C49A6C">
+<link rel="manifest" href="assets/app-manifest.json">
+<link rel="icon" href="assets/icons/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Pochadraw">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Pochadraw — Contraption Studio</title>
 <meta name="description" content="Make your own crayon physics puzzles. Remix 100 contraptions, draw a solution, and share your creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,7 +19,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Patrick+Hand&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/editor.css">
 <link rel="stylesheet" href="css/base.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='m3 29 4-12L24 0l8 8-17 17Z' fill='%23db5140'/%3E%3C/svg%3E">
 </head>
 <body>
 <div class="studio">
@@ -53,11 +60,17 @@
         <button class="button" id="tabObject" role="tab" aria-controls="objectInspector" aria-selected="true">Object</button>
         <button class="button" id="tabPuzzle" role="tab" aria-controls="puzzleProperties" aria-selected="false" tabindex="-1">Puzzle</button>
       </div>
+      <datalist id="triggerSignals"></datalist>
       <div id="objectInspector" role="tabpanel" aria-labelledby="tabObject"><div class="empty-inspector"><span aria-hidden="true">↖</span><strong>Pick something on the paper.</strong><p>Move it, give it a little nudge, or make it your own.</p></div></div>
       <div id="puzzleProperties" class="puzzle-settings" role="tabpanel" aria-labelledby="tabPuzzle" hidden>
         <label class="field">Goal<textarea id="levelStory" maxlength="600" rows="2" placeholder="Ball into the basket"></textarea></label>
         <label class="field">A little tip<textarea id="levelTip" maxlength="300" rows="2"></textarea></label>
         <div class="field-row"><label class="field">Ink budget<input id="levelInk" type="number" min="0.3" max="500" step="0.5"></label><label class="field">Paper<select id="levelPaper"><option value="graph">Graph paper</option><option value="ruled">Notebook</option><option value="dots">Dotted</option><option value="sky">Blue sky</option><option value="blueprint">Blueprint</option><option value="party">Confetti</option><option value="kraft">Kraft paper</option><option value="legal">Legal pad</option><option value="pink">Pink paper</option><option value="newsprint">Newsprint</option></select></label></div>
+        <label class="field">Win condition<select id="goalMode"><option value="any">Reach a goal object</option><option value="stars">Collect stars</option><option value="deliveries">Collect Pochacos</option></select></label>
+        <label class="field" id="starGoalField" hidden>Stars to collect<input id="goalStars" type="number" min="1" max="200" step="1"></label>
+        <div class="field-row" id="deliveryGoalFields" hidden><label class="field">Pochacos required<input id="goalNeed" type="number" min="1" max="200" step="1"></label><label class="field">Total Pochacos<input id="goalOf" type="number" min="1" max="200" step="1"></label></div>
+        <label class="toggle"><input type="checkbox" id="livePlay"> Draw while playing</label>
+        <div class="field-row" id="liveFields" hidden><label class="field">Time limit (seconds)<input id="liveTime" type="number" min="1" max="300" step="1"></label><label class="field">Drawing lifetime (seconds)<input id="liveFade" type="number" min="0" max="300" step="1" title="0 keeps drawings"></label></div>
         <p class="field-label">Crayons players can use</p><div class="crayon-options" id="crayonOptions"></div>
         <p class="micro" id="liveNote" hidden>This is a live puzzle. Its original timer and mechanisms are preserved.</p>
       </div>
@@ -77,6 +90,7 @@
 <script src="js/level-kit.js"></script>
 <script src="js/cloud-config.js"></script>
 <script src="vendor/convex-client.js"></script>
+<script src="js/editor-tools.js"></script>
 <script src="js/editor.js"></script>
 </body>
 </html>

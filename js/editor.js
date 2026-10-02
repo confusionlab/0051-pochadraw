@@ -7,31 +7,23 @@
   const cv = $('#editorCanvas'), ctx = cv.getContext('2d'), cr = new Crayon(ctx);
   const COLORS = ['#2e6bd6', '#f58a1f', '#3fa34d', '#e9b920', '#7a4fc0', '#e23b34', '#3a3844'];
   const NAMES = ['Blue · fixed', 'Orange · falls', 'Green · bouncy', 'Yellow · floats', 'Purple · hinged', 'Red · booster', 'Black · magnetic'];
-  const toys = [
-    ['ball', 'Pochaco', '', p => ({ type: 'ball', x: p[0], y: p[1], style: 'rubber', hold: 'start' })],
-    ['plank', 'Platform', '<path d="m4 22 31-10 2 6L6 27Z" fill="#c2986b"/><path d="m8 23 24-8"/>', p => ({ type: 'plank', x1: p[0]-1.5, y1: p[1], x2: p[0]+1.5, y2: p[1], t: 0.2 })],
-    ['cup', 'Basket', '<path d="m7 11 3 16h21l3-16Z" fill="#d9b87c"/><path d="M8 15h25M10 22h22m-17-9 1 14m7-14v14m6-14-1 14"/>', p => ({ type: 'cup', x: p[0], y: p[1], w: 1.8, h: 1.1, style: 'basket' })],
-    ['block', 'Block', '<path d="M7 7h26v22H7Z" fill="#d6ae7c"/><path d="m7 7 7 6h19M14 13v16"/>', p => ({ type: 'block', x: p[0]-.8, y: p[1]-.6, w: 1.6, h: 1.2, style: 'box' })],
-    ['bell', 'Bell', '<path d="M10 24q5-5 4-13 6-6 12 0-1 8 4 13Z" fill="#eec95f"/><path d="M18 26q2 5 5 0M20 6V2"/>', p => ({ type: 'bell', x: p[0], y: p[1], size: 1, hang: true })],
-    ['dominoes', 'Dominoes', '<path d="M4 10h7v19H4Zm13-3h7v22h-7Zm13-5h7v27h-7Z" fill="#efe5c7"/><path d="M5 19h5m9-2h4m9-3h4"/>', p => ({ type: 'dominoes', x: p[0], y: p[1], n: 5, gap: .45, h: .8 })],
-    ['seesaw', 'Seesaw', '<path d="m15 28 6-12 6 12Z" fill="#e6ab72"/><path d="m3 15 34-7 1 5L4 20Z" fill="#ab9870"/>', p => ({ type: 'seesaw', x: p[0], y: p[1], len: 3.4, angle: -.2, limit: [-.4, .4], baseY: 8.7, t: .14 })],
-    ['pusher', 'Pusher', '<path d="M5 12h13v10H5Z" fill="#af9270"/><path d="M18 8q8-4 13 3l4 7q-4 7-14 5l-3-4Z" fill="#e96658"/>', p => ({ type: 'pusher', x: p[0], y: p[1], dir: 1, reach: .8, speed: 3, when: 'start' })],
-    ['balloon', 'Balloon', '<ellipse cx="20" cy="13" rx="10" ry="12" fill="#94b4db"/><path d="m19 25 3 2m-2-1q-5 4 0 7"/>', p => ({ type: 'balloon', x: p[0], y: p[1], r: .5 })],
-    ['crate', 'Crate', '<path d="M8 5h25v24H8Z" fill="#c59e70"/><path d="m8 5 25 24m-25 0L33 5M9 11h23M9 23h23"/>', p => ({ type: 'crate', x: p[0], y: p[1], w: 1.1, h: 1.1, angle: 0 })],
-    ['trampoline', 'Bounce pad', '<path d="M4 17h32v5H4Z" fill="#94b696"/><path d="m8 22-2 8m26-8 2 8M8 25h24"/>', p => ({ type: 'trampoline', x: p[0], y: p[1], w: 2, bounce: .92, angle: 0 })],
-    ['fan', 'Fan', '<circle cx="20" cy="14" r="12" fill="#c9d9de"/><path d="M20 2v24M8 14h24m-20-8 16 16M12 22 28 6M20 26v5m-8 0h16"/>', p => ({ type: 'fan', x: p[0], y: p[1], dir: 'right', power: 6, reach: 5, on: true })],
-    ['note', 'Note', '<path d="M8 2h24v27H8Z" fill="#f7da79"/><path d="M13 10h14m-14 5h14m-14 5h8"/>', p => ({ type: 'note', x: p[0], y: p[1], text: 'Draw something here!', size: 28 })],
-    ['lava', 'Lava', '<path d="m3 20 5-8 6 6 6-11 6 13 8-9 4 17H3Z" fill="#e89a62"/><path d="m8 24 6-4 6 4 6-3 7 3"/>', p => ({ type: 'lava', x: p[0]-1, y: p[1], w: 2, h: .4 })]
-  ];
+  const toys = CC.EditorTools;
   const fields = {
-    ball: ['x','y','r','style','hold'], plank: ['x1','y1','x2','y2','t'], gate: ['x1','y1','x2','y2','t','id','when'],
-    cup: ['x','y','w','h','back','backH'], block: ['x','y','w','h','text'], bell: ['x','y','size'],
-    dominoes: ['x','y','n','gap','h'], seesaw: ['x','y','len','angle','baseY'], pusher: ['x','y','dir','reach','speed','when'],
-    balloon: ['x','y','r'], crate: ['x','y','w','h','angle'], trampoline: ['x','y','w','bounce','angle'], fan: ['x','y','dir','power','reach','on'],
-    note: ['x','y','text','size','rot'], label: ['x','y','text','you'], lava: ['x','y','w','h'], car: ['x','y','dir','speed','when'],
-    button: ['x','y','w','angle','id','fires'], cannon: ['x','y','angle','speed','when'], star: ['x','y','r']
+    ball: ['x','y','r','style','hold','metal'], plank: ['x1','y1','x2','y2','t','style','friction'], gate: ['x1','y1','x2','y2','t','style','when'],
+    cup: ['x','y','w','h','style','accept','back','backH','moving'], block: ['x','y','w','h','style','text'], bell: ['x','y','size','hang','goal'],
+    dominoes: ['x','y','n','gap','h'], seesaw: ['x','y','len','t','angle','baseY','limit.0','limit.1','lips'], pusher: ['x','y','dir','reach','speed','when'],
+    balloon: ['x','y','r','tie.0','tie.1','goal','fires'], crate: ['x','y','w','h','angle','metal','density'], trampoline: ['x','y','w','bounce','angle'], fan: ['x','y','dir','power','reach','width','on','when'],
+    note: ['x','y','text','size','rot'], lava: ['x','y','w','h'], nodraw: ['x','y','w','h','allow'], car: ['x','y','dir','speed','run','torque','metal','when'],
+    button: ['x','y','w','angle','fires'], cannon: ['x','y','angle','speed','when','ball.style'], star: ['x','y'],
+    lamp: ['x','y','when','flip','goal'], conveyor: ['x1','x2','y','speed','when'], flag: ['x','y'],
+    boss: ['x','y','w','h','name','look','hp','minHit','hitBy','eats','flip','moving'], cat: ['x','y'], deco: ['x','y','kind','s'],
+    wire: ['startX','startY','endX','endY'], arrow: ['startX','startY','endX','endY']
   };
-  const labels = { x:'X position', y:'Y position', x1:'Start X', y1:'Start Y', x2:'End X', y2:'End Y', r:'Radius', w:'Width', h:'Height', t:'Thickness', len:'Length', n:'Count', baseY:'Base Y', bounce:'Bounciness', angle:'Angle (degrees)', rot:'Text angle (degrees)', gap:'Spacing', style:'Material', hold:'Release', when:'Triggered by', back:'Tall side', backH:'Side height', on:'Always on', you:'Player label', text:'Text', size:'Size', label:'Caption letter', id:'Mechanism ID', fires:'Activates IDs', dir:'Direction', power:'Power', speed:'Speed', reach:'Reach' };
+  const labels = { x:'X position', y:'Y position', x1:'Start X', y1:'Start Y', x2:'End X', y2:'End Y', startX:'Start X',startY:'Start Y',endX:'End X',endY:'End Y', r:'Radius', w:'Width', h:'Height', t:'Thickness', len:'Length', n:'Count', count:'Count', baseY:'Base Y', bounce:'Bounciness', angle:'Angle (degrees)', rot:'Text angle (degrees)', gap:'Spacing', style:'Material', 'ball.style':'Pochaco material', hold:'Release', when:'Trigger', back:'Tall side', backH:'Side height', on:'Always on', text:'Text', size:'Size', fires:'Activates', dir:'Direction', power:'Power', speed:'Speed', reach:'Reach', width:'Air width', goal:'Puzzle goal', look:'Appearance', hp:'Hit points',minHit:'Minimum hit speed',hitBy:'Hit by',eats:'Eats drawings',kind:'Kind',s:'Scale',every:'Seconds between releases',first:'First release (seconds)',run:'Run time (seconds)',metal:'Magnetic',density:'Weight',flip:'Flip',hang:'Hanging',accept:'Accepts',moving:'Moving','move.dx':'Horizontal travel','move.dy':'Vertical travel','move.period':'Travel time (seconds)','move.phase':'Starting phase','tie.0':'Tie X','tie.1':'Tie Y','limit.0':'Minimum angle (degrees)','limit.1':'Maximum angle (degrees)',allow:'Allowed crayons',friction:'Friction',torque:'Motor strength' };
+  const materials = Object.keys(CC.BALLS);
+  Object.assign(labels, {lips:'Side stops',xs:'Drop offsets'});
+  const appearances = ['grumbox','knight','jelly','cloud','eater','clock','snail','robot','king','dragon'];
+  const names = {rubber:'Standard',tennis:'Bouncy',marble:'Marble',bowling:'Heavy',beach:'Light',steel:'Steel',egg:'Fragile',meatball:'Soft',ball:'Any Pochaco',any:'Any moving object',grumbox:'Grumbox',knight:'Sir Tipsy',jelly:'Boingo',cloud:'Nimbus',eater:'Scribble Eater',clock:'Tick-Tock',snail:'Turbo Snail',robot:'Magneto',king:'The Chaos King',dragon:'The Crayon Dragon',tube:'Dispenser',hen:'Hen',cannon:'Repeating cannon'};
   let level, selected = -1, tool = 'select', history = [], future = [], sim, drag = null, noteTimer, draftTimer, capture = null, libraryObserver, homeTab = 'studio';
   let sketchbook = Kit.read('library', []);
   if (!Array.isArray(sketchbook)) sketchbook = [];
@@ -119,7 +111,7 @@
     }
   }
   function render() { drawTo(cv, level, selected, $('#showHint').checked); }
-  const editableFields = '#levelName,#levelStory,#levelTip,#levelInk,#levelPaper,[data-field],[data-crayon]';
+  const editableFields = '#levelName,#levelStory,#levelTip,#levelInk,#levelPaper,#goalMode,#goalStars,#goalNeed,#goalOf,#livePlay,#liveTime,#liveFade,[data-field],[data-crayon]';
   const fieldValue = input => input.type === 'checkbox' ? String(input.checked) : input.value;
   function syncSaveButton() {
     const saved = sketchbook.find(item => item.id === level.id);
@@ -139,36 +131,77 @@
   }
   function settings() {
     $('#levelName').value = level.name; $('#levelStory').value = level.story; $('#levelTip').value = level.tip;
+    $('#goalMode').value = level.goal?.stars ? 'stars' : level.goal?.need ? 'deliveries' : 'any';
+    $('#goalStars').value=level.goal?.stars||1;$('#goalNeed').value=level.goal?.need||1;$('#goalOf').value=level.goal?.of||1;
+    $('#starGoalField').hidden=$('#goalMode').value!=='stars';$('#deliveryGoalFields').hidden=$('#goalMode').value!=='deliveries';
+    $('#livePlay').checked=!!level.live;$('#liveFields').hidden=!level.live;$('#liveTime').value=level.live?.time||45;$('#liveFade').value=level.live?.fade||0;
     $('#levelInk').value = level.ink; $('#levelPaper').value = level.paper; $('#liveNote').hidden = !level.live;
     document.querySelectorAll('[data-crayon]').forEach(c => c.checked = level.crayons.includes(c.dataset.crayon));
   }
+  function fieldGet(p, key) {
+    if (key === 'moving') return !!p.move;
+    if (key === 'lips') return p.lips?.length === 2 ? 'both' : p.lips?.[0] === -1 ? 'left' : p.lips?.[0] === 1 ? 'right' : '';
+    if (key.startsWith('limit.') && typeof p.limit === 'number') return key === 'limit.0' ? -p.limit : p.limit;
+    if (/^(start|end)[XY]$/.test(key)) {
+      const first = key.startsWith('start'), axis = key.endsWith('X') ? 0 : 1;
+      return (p.type === 'wire' ? p[first ? 'from' : 'to'] : p.pts[first ? 0 : p.pts.length-1])[axis];
+    }
+    return key.split('.').reduce((value, part) => value?.[part], p);
+  }
+  function fieldSet(p, key, value) {
+    if (key === 'moving') { if (value) p.move = {dx:2,dy:0,period:4}; else delete p.move; return; }
+    if (key === 'lips') { p.lips = value === 'both' ? [-1,1] : value === 'left' ? [-1] : value === 'right' ? [1] : []; return; }
+    if (/^(start|end)[XY]$/.test(key)) {
+      const first = key.startsWith('start'), axis = key.endsWith('X') ? 0 : 1;
+      (p.type === 'wire' ? p[first ? 'from' : 'to'] : p.pts[first ? 0 : p.pts.length-1])[axis] = value; return;
+    }
+    if (key.startsWith('tie.') && !p.tie) p.tie=[p.x,p.y+1];
+    if (key.startsWith('limit.') && !Array.isArray(p.limit)) p.limit=[-(p.limit||.5),p.limit||.5];
+    const parts = key.split('.'), leaf = parts.pop();
+    let parent = p;
+    for (let i=0;i<parts.length;i++) parent = parent[parts[i]] ||= /^\d+$/.test(i+1<parts.length ? parts[i+1] : leaf) ? [] : {};
+    if (value === undefined) delete parent[leaf]; else parent[leaf] = value;
+    if (key === 'kind' && p.type === 'dispenser' && value !== 'hen') p.x ??= (p.x1+p.x2)/2;
+    if (key === 'kind' && p.type === 'dispenser' && value === 'hen') {
+      p.x1 ??= p.x-1; p.x2 ??= p.x+1;
+      if (p.x2 <= p.x1) p.x2 = p.x1+2;
+    }
+  }
+  function angleField(p, key) { return key.startsWith('limit.') || ['angle','rot'].includes(key) && !(p.type === 'cannon' || p.type === 'dispenser'); }
   function makeField(p, key) {
     const label = document.createElement('label'); label.className = 'field'; label.append(document.createTextNode(labels[key] || key));
-    let input;
-    const choices = key === 'style' && p.type === 'ball' ? Object.keys(CC.BALLS) : key === 'hold' ? ['', 'start'] : key === 'back' ? ['', 'left', 'right'] : key === 'dir' && p.type === 'fan' ? ['right','left','up','down'] : null;
+    let input, value = fieldGet(p,key);
+    const styleOptions = {ball:materials,dispenser:materials,cup:['basket','bucket','bowl','nest'],block:['wood','box','books'],plank:['wood','metal'],gate:['wood','metal']};
+    const choices = key === 'style' ? styleOptions[p.type] : key === 'ball.style' ? materials : key === 'look' ? appearances : key === 'kind' ? p.type === 'deco' ? ['cloud','sun'] : ['tube','hen','cannon'] : key === 'accept' ? ['ball','any',...materials] : key === 'hitBy' ? ['','ball'] : key === 'lips' ? ['','left','right','both'] : key === 'back' ? ['', 'left', 'right'] : key === 'dir' ? p.type === 'fan' ? ['right','left','up','down'] : [-1,1] : null;
     if (choices) {
       input = document.createElement('select');
-      for (const value of choices) { const o = document.createElement('option'); o.value=value; o.textContent=value || (key==='hold' ? 'Falls at GO' : 'Neither'); input.append(o); }
-      input.value = p[key] ?? '';
+      for (const v of choices) { const o = document.createElement('option'); o.value=v; o.textContent=key === 'dir' && typeof v === 'number' ? v < 0 ? 'Left' : 'Right' : names[v] || v || (key==='hold' ? 'Falls at Play' : key==='hitBy' ? 'Any moving object' : 'Neither'); input.append(o); }
+      const fallback = key === 'style' ? p.type === 'cup' ? 'basket' : p.type === 'block' || p.type === 'plank' || p.type === 'gate' ? 'wood' : 'rubber' : key === 'accept' ? 'ball' : key === 'ball.style' ? 'meatball' : key === 'dir' ? p.type === 'fan' ? 'right' : 1 : '';
+      input.value = value ?? fallback;
     } else {
       input = document.createElement('input');
-      if (typeof p[key] === 'boolean' || ['on','you'].includes(key)) { input.type='checkbox'; input.checked=!!p[key]; }
-      else if (typeof p[key] === 'number' || !['text','label','id','fires','when'].includes(key)) {
-        input.type='number'; input.step=key==='n' ? '1' : '0.1';
-        let value = p[key];
+      if (typeof value === 'boolean' || ['on','metal','goal','eats','flip','hang','moving'].includes(key)) { input.type='checkbox'; input.checked=key==='goal' ? value!==false : !!value; }
+      else if (!['text','name','fires','when','hold','allow','xs'].includes(key)) {
+        input.type='number'; input.step=['n','count','hp'].includes(key) ? '1' : '0.1';
         if (value == null && key==='r' && p.type==='ball') value=CC.BALLS[p.style||'rubber'].r;
-        input.value=value==null ? '' : ['angle','rot'].includes(key) && p.type !== 'cannon' ? Math.round(value*180/Math.PI*10)/10 : value;
-      } else { input.type='text'; input.maxLength=key==='text' ? 300 : 80; input.value=Array.isArray(p[key]) ? p[key].join(', ') : p[key] || ''; }
+        input.value=value==null ? '' : angleField(p,key) ? Math.round(value*180/Math.PI*10)/10 : value;
+      } else { input.type='text'; input.maxLength=key==='text' ? 300 : 80; input.value=Array.isArray(value) ? value.join(', ') : value || ''; }
+      if (['when','fires','hold'].includes(key)) { input.setAttribute('list','triggerSignals'); input.placeholder=key==='fires' ? 'signal1' : key==='hold' ? 'Empty falls at Play' : 'start or signal name'; }
+      if (key==='xs') input.placeholder='0';
     }
     input.dataset.field=key;
     input.addEventListener('change', () => change(() => {
-      const object=level.parts[selected];
-      if (input.type==='checkbox') object[key]=input.checked;
+      const object=level.parts[selected]; let next;
+      if (input.type==='checkbox') next=input.checked;
       else if (input.type==='number') {
-        if (input.value==='') delete object[key];
-        else { const value=Number(input.value); if(!Number.isFinite(value)) throw new Error('Enter a valid number.'); object[key]=['angle','rot'].includes(key) && object.type !== 'cannon' ? value*Math.PI/180 : value; }
-      } else if (!input.value && ['hold','back','label','id','when'].includes(key)) delete object[key];
-      else object[key]=key==='fires' ? input.value.split(',').map(s=>s.trim()).filter(Boolean) : input.value;
+        next=input.value==='' ? undefined : Number(input.value);
+        if(next !== undefined && !Number.isFinite(next)) throw new Error('Enter a valid number.');
+        if(next !== undefined && angleField(object,key)) next *= Math.PI/180;
+      } else if (key==='dir' && object.type!=='fan') next=Number(input.value);
+      else if (!input.value && ['hold','back','when','hitBy'].includes(key)) next=undefined;
+      else if(key==='xs') next=input.value.trim() ? input.value.split(',').map(Number) : undefined;
+      else next=['fires','allow'].includes(key) ? input.value.split(',').map(s=>s.trim()).filter(Boolean) : input.value;
+      fieldSet(object,key,next);
     }));
     input.dataset.committedValue = fieldValue(input);
     label.append(input); return label;
@@ -193,9 +226,12 @@
     const p=level.parts[selected];
     if(!p) { const empty=document.createElement('div'); empty.className='empty-inspector'; empty.innerHTML='<span aria-hidden="true">↖</span><strong>Pick something on the paper.</strong><p>Move it, give it a little nudge, or make it your own.</p>'; box.append(empty); return; }
     const heading=document.createElement('div'); heading.className='selected-heading';
-    const name=document.createElement('strong'); name.textContent=(toys.find(t=>t[0]===p.type)||['',p.type])[1];
+    const name=document.createElement('strong'); name.textContent=(toys.find(t=>t[0] === (p.type==='dispenser' ? p.kind==='hen' ? 'hen' : p.kind==='cannon' ? 'repeater' : 'dispenser' : p.type==='deco' ? p.kind : p.type))||['',p.type])[1];
     const number=document.createElement('span'); number.textContent='OBJECT '+String(selected+1).padStart(2,'0'); heading.append(name,number); box.append(heading);
-    const list=fields[p.type] || Object.keys(p).filter(k=>!['type'].includes(k)&&['string','number','boolean'].includes(typeof p[k]));
+    const dispenserFields = p.kind==='hen' ? ['x1','x2','y','speed'] : ['x','y',...(p.kind==='cannon' ? ['angle','speed'] : ['xs'])];
+    const list=((p.type==='dispenser' ? ['kind',...dispenserFields,'style','count','every','first','when'] : fields[p.type]) || Object.keys(p).filter(k=>!['type'].includes(k)&&['string','number','boolean'].includes(typeof p[k]))).slice();
+    if (p.move) list.push(...['move.dx','move.dy','move.period','move.phase'].filter(key=>!list.includes(key)));
+    const signals=$('#triggerSignals');signals.replaceChildren();for(const signal of new Set(['start','signal1',...level.parts.flatMap(item=>[item.when,...[].concat(item.fires||[])])].filter(Boolean))){const option=document.createElement('option');option.value=signal;signals.append(option);}
     let row;
     for(const key of list) { if(!row||row.children.length===2) { row=document.createElement('div'); row.className='field-row'; box.append(row); } row.append(makeField(p,key)); }
     const acts=document.createElement('div'); acts.className='object-actions';
@@ -279,6 +315,15 @@
     const stick=document.createElement('span');label.append(input,stick);$('#crayonOptions').append(label);
   });
   for(const [selector,key] of [['#levelName','name'],['#levelStory','story'],['#levelTip','tip'],['#levelPaper','paper']]) $(selector).onchange=ev=>change(()=>level[key]=ev.target.value,true);
+  $('#goalMode').onchange=ev=>change(()=>{
+    if(ev.target.value==='any') delete level.goal;
+    else if(ev.target.value==='stars') level.goal={stars:Math.max(1,level.parts.filter(p=>p.type==='star').length)};
+    else {const total=Math.max(1,level.parts.reduce((n,p)=>n+(p.type==='ball'?1:p.type==='dispenser'?p.count:0),0));level.goal={need:total,of:total};}
+  });
+  for(const [id,key] of [['#goalStars','stars'],['#goalNeed','need'],['#goalOf','of']]) $(id).onchange=ev=>change(()=>level.goal[key]=Number(ev.target.value));
+  $('#livePlay').onchange=ev=>change(()=>{if(ev.target.checked)level.live={ink:level.ink,time:45};else delete level.live;});
+  $('#liveTime').onchange=ev=>change(()=>level.live.time=Number(ev.target.value));
+  $('#liveFade').onchange=ev=>change(()=>{const fade=Number(ev.target.value);if(!Number.isFinite(fade)||fade<0||fade>300)throw new Error('Drawing lifetime must be between 0 and 300 seconds.');if(fade)level.live.fade=fade;else delete level.live.fade;});
   $('#levelInk').onchange=ev=>change(()=>{level.ink=Number(ev.target.value);level.par=[level.ink*.5,level.ink*.75];if(level.live)level.live.ink=level.ink;});
   $('#selectTool').onclick=()=>setTool('select');$('#undoEdit').onclick=()=>undo(false);$('#redoEdit').onclick=()=>undo(true);$('#showHint').onchange=render;
   $('#saveLevel').onclick=()=>saveToLibrary();

@@ -13,14 +13,14 @@ Draw the missing parts of a machine and press **GO**. Seven crayons have differe
 ## Make
 
 - Start with a blank puzzle, or remix any of the 100 campaign levels.
-- Place balls, platforms, baskets, blocks, bells, dominoes, seesaws, pushers, balloons, crates, trampolines, fans, notes and lava.
+- Place every campaign object from the 32-option Tool Box: Pochaco, platforms, baskets, blocks, bells, dominoes, seesaws, pushers, balloons, crates, bounce pads, fans, gates, buttons, lamps, cars, conveyors, cannons, dispensers, hens, repeating cannons, bosses, finish flags, stars, no-draw zones, lava, notes, arrows, wires, clouds, suns and cats.
 - Select and drag objects. Drag platform endpoints to resize or rotate them. Edit other dimensions, angles, materials and mechanism settings in the inspector.
-- Set the ink budget, choose player crayons and pick a paper background.
+- Configure materials, container styles, all ten boss appearances, movement, triggers and dispenser timing in Object Properties. Puzzle Properties sets the win condition, timed drawing, ink budget, player crayons and paper background.
 - Undo/redo edits. Drafts save automatically; **Save** keeps a named puzzle. Starting or loading another puzzle keeps your previous draft in the sketchbook.
-- **Test & draw** uses the original game and physics. Complete the puzzle, then keep your winning drawing as a hint. The studio replays the drawing before accepting it.
+- **Play** uses the original game and physics. Complete the puzzle, then keep your winning drawing as a hint. The studio replays the drawing before accepting it.
 - Play saved puzzles from the Studio library.
 
-Home opens a shared workspace with **Levels** and **Studio** tabs. Levels groups the campaign into ten world sections with responsive puzzle grids that wrap into rows. Play a campaign puzzle or choose Remix to make a separate copy; the originals stay unchanged. Studio lists your created levels in the same wrapping grid, with a preview of each puzzle. New level and Edit open the editor. All views share the game’s wood background, top bar and paper controls. Save status appears beside Save in the editor. Home in the player and editor returns to the Levels or Studio tab that opened the level, including after a reload.
+Home opens a shared workspace with **Levels** and **Studio** tabs. Levels groups the campaign into ten world sections with responsive puzzle grids that wrap into rows. Play a campaign puzzle or choose Remix to make a separate copy; the originals stay unchanged. Studio lists your created levels in the same wrapping grid, with a preview of each puzzle. New level and Edit open the editor. All views share the game’s wood background, top bar and paper controls. The editor’s Save button reads Saved when there are no changes. Home in the player and editor returns to the Levels or Studio tab that opened the level, including after a reload.
 
 Custom puzzles, editor drafts and completed-level star progress save to a shared Convex workspace. Gameplay drawings, the selected level, sound preferences and tutorial state stay in browser storage and never upload or restore from the cloud. There is one workspace, with no authentication or user scoping. Browser storage caches saves offline; pending changes retry when the connection returns. Star saves keep the best score. Share links still contain the level itself. Live puzzle hint capture is replay-checked; erasing during a live run may require drawing a fresh solution to record a reproducible hint.
 
@@ -66,6 +66,7 @@ The editor supports mouse, pen and touch. On a phone, landscape gives the drawin
 
 - `index.html`, `js/app.js`: original campaign plus custom puzzle play and editor integration.
 - `editor.html`, `css/editor.css`, `js/editor.js`: visual studio and playtest UI.
+- `js/editor-tools.js`: complete campaign object catalog and placement defaults.
 - `js/level-kit.js`: validation, level geometry, share encoding and browser storage helpers.
 - `convex/schema.ts`, `convex/workspace.ts`: the shared puzzle library, editor draft and completed-level progress.
 - `tools/cloud-client.js`: cloud hydration, realtime sketchbook updates, browser migration and offline save queue.

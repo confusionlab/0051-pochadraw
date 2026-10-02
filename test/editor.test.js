@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const CC = require('./load')(['js/levels.js', 'js/level-kit.js']);
+const CC = require('./load')(['js/levels.js', 'js/level-kit.js', 'js/editor-tools.js']);
 const { LevelKit: Kit, Sim, LEVELS } = CC;
 test('every campaign puzzle can be remixed without losing its mechanisms or answer', () => {
   for (const original of LEVELS) {
@@ -42,4 +42,44 @@ test('malformed imports and expensive object counts are rejected', () => {
   const poisoned = JSON.parse('{"parts":[],"__proto__":{"polluted":true}}');
   assert.throws(()=>Kit.validate(poisoned));
   assert.equal({}.polluted, undefined);
+});
+
+test('tool box covers every campaign object and every placed object runs in physics', () => {
+  const defs=CC.EditorTools.map(tool=>tool[3]([8,4]));
+  for(const type of new Set(LEVELS.flatMap(level=>level.parts.map(part=>part.type)))) assert.ok(defs.some(part=>part.type===type), 'Missing tool: '+type);
+  for(const kind of ['tube','hen','cannon']) assert.ok(defs.some(part=>part.type==='dispenser'&&part.kind===kind));
+  for(const kind of ['sun','cloud']) assert.ok(defs.some(part=>part.type==='deco'&&part.kind===kind));
+  for(const def of defs) {
+    const level=Kit.blank();level.parts=[def];const valid=Kit.validate(level),sim=new Sim(valid,[]);sim.start();
+    for(let i=0;i<180;i++)sim.step();
+    for(const part of sim.parts)for(const body of part.bodies) {
+      assert.ok(Number.isFinite(body.getPosition().x), def.type+' X');
+      assert.ok(Number.isFinite(body.getPosition().y), def.type+' Y');
+    }
+  }
+});
+test('wire endpoints and balloon ties move with the objects', () => {
+  const wire={type:'wire',from:[1,2],to:[3,4]};Kit.move(wire,2,-1);
+  assert.equal(JSON.stringify(wire.from),'[3,1]');assert.equal(JSON.stringify(wire.to),'[5,3]');
+  const balloon={type:'balloon',x:1,y:2,tie:[1,4]};Kit.move(balloon,2,-1);assert.equal(JSON.stringify(balloon.tie),'[3,3]');
+});
+test('tool box button activates the matching gate and goal lamp', () => {
+  const tool=(id,point)=>CC.EditorTools.find(t=>t[0]===id)[3](point);
+  const level=Kit.blank();level.parts=[tool('ball',[2,1]),tool('button',[2,3]),tool('gate',[6,4]),tool('lamp',[10,8])];
+  const sim=new Sim(Kit.validate(level),[]);sim.start();
+  for(let i=0;i<180&&!sim.won;i++)sim.step();
+  assert.equal(sim.parts[1].st.pressed,true);
+  assert.equal(sim.parts[2].st.open,true);
+  assert.equal(sim.parts[3].st.on,true);
+  assert.equal(sim.won,true);
+});
+test('new object selection bounds follow visible machinery and drop positions', () => {
+  assert.equal(JSON.stringify(Kit.bounds({type:'conveyor',x1:1,x2:4,y:3})),'[1,2.95,4,3.35]');
+  assert.equal(JSON.stringify(Kit.bounds({type:'dispenser',kind:'hen',x1:2,x2:6,y:3})),'[1.5,2.25,2.5,3.1]');
+  assert.equal(JSON.stringify(Kit.bounds({type:'dispenser',kind:'tube',x:3,y:4,xs:[-1,2]})),'[1.6,0,5.4,4.1]');
+});
+test('new machinery rejects invalid geometry and release settings', () => {
+  for(const part of [{type:'wire',from:[1,2],to:[null,3]},{type:'arrow',pts:[[1,2]]},{type:'conveyor',x1:4,x2:2,y:3},{type:'dispenser',kind:'hen',x1:2,x2:2,y:2,count:3},{type:'boss',x:2,y:2,w:1,h:1,hp:-1},{type:'dispenser',x:2,y:2,count:3,every:0}]){
+    const level=Kit.blank();level.parts.push(part);assert.throws(()=>Kit.validate(level),part.type);
+  }
 });

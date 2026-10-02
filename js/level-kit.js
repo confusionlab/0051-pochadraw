@@ -28,9 +28,23 @@
       for (const k of ['x', 'y', 'x1', 'y1', 'x2', 'y2', 'baseY', 'angle']) {
         if (p[k] != null && (typeof p[k] !== 'number' || Math.abs(p[k]) > (k === 'angle' ? 360 : 100))) throw new Error('Object positions must be numbers within the canvas range.');
       }
-      const required = ['plank','gate'].includes(p.type) ? ['x1','y1','x2','y2'] : ['block','crate','lava','nodraw'].includes(p.type) ? ['x','y','w','h'] : ['ball','cup','bell','balloon','fan','seesaw','pusher','car','cannon','trampoline','star'].includes(p.type) ? ['x','y'] : [];
+      const required = ['plank','gate'].includes(p.type) ? ['x1','y1','x2','y2'] : ['block','crate','lava','nodraw'].includes(p.type) ? ['x','y','w','h'] : ['ball','cup','bell','balloon','fan','seesaw','pusher','car','cannon','trampoline','star','lamp','flag','deco','cat','note','boss'].includes(p.type) ? ['x','y'] : [];
+      if (p.type === 'conveyor') required.push('x1','x2','y');
+      if (p.type === 'dispenser') required.push('y',...(p.kind === 'hen' ? ['x1','x2'] : ['x']));
+      if (p.type === 'boss') required.push('w','h');
       if (required.some(k => typeof p[k] !== 'number' || !Number.isFinite(p[k]))) throw new Error('An object is missing a required position or dimension.');
       if (['plank','gate'].includes(p.type) && Math.hypot(p.x2-p.x1,p.y2-p.y1) < .05) throw new Error('A platform must have two different endpoints.');
+      if ((p.type === 'conveyor' || p.type === 'dispenser' && p.kind === 'hen') && p.x2 <= p.x1) throw new Error('End X must be greater than Start X.');
+      const point = value => Array.isArray(value) && value.length === 2 && value.every(n => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 100);
+      if (p.type === 'wire' && (!point(p.from) || !point(p.to))) throw new Error('A wire needs two valid endpoints.');
+      if (p.type === 'arrow' && (!Array.isArray(p.pts) || p.pts.length < 2 || !p.pts.every(point))) throw new Error('An arrow needs at least two valid points.');
+      if (p.tie != null && !point(p.tie)) throw new Error('A balloon tie needs both X and Y.');
+      if (p.limit != null && (typeof p.limit === 'number' ? p.limit <= 0 : !point(p.limit) || p.limit[0] > p.limit[1])) throw new Error('Minimum angle must not exceed maximum angle.');
+      if (p.lips != null && (!Array.isArray(p.lips) || p.lips.some(side=>side!==-1&&side!==1))) throw new Error('Choose left, right, or both seesaw stops.');
+      if (p.xs != null && (!Array.isArray(p.xs) || !p.xs.length || p.xs.some(x=>typeof x!=='number'||!Number.isFinite(x)||Math.abs(x)>100))) throw new Error('Drop offsets must be comma-separated numbers.');
+      if (p.hp != null && (!Number.isInteger(p.hp) || p.hp < 1 || p.hp > 100)) throw new Error('Hit points must be a whole number between 1 and 100.');
+      if (p.every != null && (typeof p.every !== 'number' || p.every <= 0)) throw new Error('Release interval must be positive.');
+      if (p.move && (p.move.period != null && p.move.period <= 0)) throw new Error('Travel time must be positive.');
       if (p.type === 'ball' && p.style && !Object.hasOwn(CC.BALLS, p.style)) throw new Error('Unknown ball material.');
       if (p.n != null && (!Number.isInteger(p.n) || p.n < 1 || p.n > 100)) throw new Error('Object counts must be between 1 and 100.');
       if (p.type === 'dispenser' && (!Number.isInteger(p.count) || p.count < 1 || p.count > 100)) throw new Error('A dispenser can release between 1 and 100 balls.');
@@ -74,6 +88,8 @@
     ] });
   }
   function bounds(p) {
+    if (p.type === 'conveyor') return [p.x1,p.y-.05,p.x2,p.y+.35];
+    if (p.type === 'dispenser' && p.kind === 'hen') return [p.x1-.5,p.y-.75,p.x1+.5,p.y+.1];
     if (p.x1 != null && p.x2 != null) return [Math.min(p.x1, p.x2), Math.min(p.y1 ?? p.y ?? 0, p.y2 ?? p.y ?? 0) - 0.1, Math.max(p.x1, p.x2), Math.max(p.y1 ?? p.y ?? 0, p.y2 ?? p.y ?? 0) + 0.1];
     if (p.pts && p.pts.length) return [Math.min(...p.pts.map(q => q[0])), Math.min(...p.pts.map(q => q[1])), Math.max(...p.pts.map(q => q[0])), Math.max(...p.pts.map(q => q[1]))];
     const x = p.x || 0, y = p.y || 0;
@@ -84,6 +100,12 @@
     if (p.type === 'bell') return [x - 0.4 * (p.size || 1), y, x + 0.4 * (p.size || 1), y + 0.8 * (p.size || 1)];
     if (p.type === 'seesaw') return [x - (p.len || 3) / 2, y - 0.5, x + (p.len || 3) / 2, p.baseY || 8.7];
     if (p.type === 'note' || p.type === 'label') return [x - 0.2, y - 0.25, x + Math.max(0.6, (p.text || '').length * 0.14), y + 0.25];
+    if (p.type === 'wire') return [Math.min(p.from[0],p.to[0]), Math.min(p.from[1],p.to[1]), Math.max(p.from[0],p.to[0]), Math.max(p.from[1],p.to[1])+.2];
+    if (p.type === 'dispenser' && p.kind === 'tube') return [x+Math.min(...(p.xs||[0]))-.4,0,x+Math.max(...(p.xs||[0]))+.4,y+.1];
+    if (p.type === 'deco') { const r=(p.s||1)*.8; return [x-r,y-r,x+r,y+r]; }
+    if (p.type === 'flag') return [x-.1,y-1.6,x+.7,y];
+    if (p.type === 'lamp') return [x-.5,y-1.3,x+.5,y];
+    if (p.type === 'cat') return [x-.5,y-.9,x+.5,y];
     if (p.type === 'balloon') { const r = p.r || 0.45; return [x-r, y-r, x+r, y+r]; }
     if (p.type === 'boss') return [x - (p.w || 2) / 2, y - (p.h || 2), x + (p.w || 2) / 2, y];
     const w = p.w || p.len || 1, h = p.h || 1;
@@ -92,6 +114,7 @@
   function move(p, dx, dy) {
     for (const key of ['x', 'x1', 'x2']) if (typeof p[key] === 'number') p[key] = Math.round((p[key] + dx) * 1000) / 1000;
     for (const key of ['y', 'y1', 'y2', 'baseY']) if (typeof p[key] === 'number') p[key] = Math.round((p[key] + dy) * 1000) / 1000;
+    for (const key of ['from','to','tie']) if (Array.isArray(p[key])) p[key] = [p[key][0]+dx,p[key][1]+dy];
     if (p.pts) p.pts = p.pts.map(q => [q[0] + dx, q[1] + dy]);
   }
   function encode(level) {
