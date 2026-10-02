@@ -352,7 +352,7 @@
     WORLDS.forEach((world, wi) => {
       const section = document.createElement('section'); section.className = 'world-section'; section.id = 'world-' + wi;
       const heading = document.createElement('h2'); heading.id = section.id + '-title'; heading.textContent = (wi + 1) + '. ' + world.name; section.setAttribute('aria-labelledby', heading.id);
-      const row = document.createElement('div'); row.className = 'world-levels'; row.tabIndex = 0; row.setAttribute('aria-label', world.name + ' levels');
+      const row = document.createElement('div'); row.className = 'world-levels'; row.setAttribute('aria-label', world.name + ' levels');
       LEVELS.filter(lv => lv.world === wi).forEach(lv => {
         const card = document.createElement('article'); card.className = 'campaign-card';
         const thumbnail = document.createElement('a'); thumbnail.href = 'index.html?level=' + (lv.n - 1); thumbnail.setAttribute('aria-label', 'Play ' + lv.name);

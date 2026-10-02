@@ -28,7 +28,7 @@ try {
   click('#tabLevels');
   assert.equal(evalJS('document.querySelectorAll(".campaign-card").length'),100);
   assert.equal(evalJS('document.querySelectorAll(".world-section").length'),10);
-  assert.equal(evalJS('Array.from(document.querySelectorAll(".world-levels")).every(r=>r.children.length===10 && r.scrollWidth>r.clientWidth)'),true);
+  assert.equal(evalJS('Array.from(document.querySelectorAll(".world-levels")).every(r=>r.children.length===10 && r.scrollWidth<=r.clientWidth && r.lastElementChild.getBoundingClientRect().top>r.firstElementChild.getBoundingClientRect().top)'),true);
   assert.equal(evalJS('!!document.querySelector("#browseWorld,header.top a")'),false);
   assert.equal(evalJS('document.querySelector(".campaign-card button").textContent'),'Remix');
   evalJS(`localStorage.setItem('campaign-original',JSON.stringify(CC.LEVELS[0])); true`);
@@ -37,7 +37,7 @@ try {
   assert.equal(evalJS('document.querySelector("#tabStudio").getAttribute("aria-selected")'),'true');
   settle();assert.equal(state().custom,true);
   assert.notEqual(state().id,evalJS('CC.LEVELS[0].id'));
-  console.log('PASS 100 campaign levels in 10 scrollable world sections and separate remixes');
+  console.log('PASS 100 campaign levels in 10 wrapping world grids and separate remixes');
   browser('fill','#levelName','포차 ✎ café');browser('press','Tab');settle();
   click('#saveLevel');
   assert.ok(evalJS('CC.LevelKit.read("library",[]).some(l=>l.name==="포차 ✎ café")'));
