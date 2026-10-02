@@ -66,7 +66,7 @@
     to.push(snapshot()); const previous = from.pop(); level = previous.level; selected = previous.selected; refresh(); saveDraft();
   }
   function setLevel(next) {
-    level = Kit.validate(next); selected = -1; history = []; future = []; setTool('select'); refresh(); saveDraft();
+    level = Kit.validate(next); selected = -1; history = []; future = []; setTool('select'); showProperties('object'); refresh(); saveDraft();
   }
   function writeLibrary() {
     try { Kit.write('library', sketchbook); $('#savedCount').textContent = sketchbook.length; return true; }
@@ -156,6 +156,21 @@
     }));
     label.append(input); return label;
   }
+  function showProperties(name) {
+    const object = name === 'object';
+    $('#objectInspector').hidden = !object; $('#puzzleProperties').hidden = object;
+    for (const [id, active] of [['#tabObject', object], ['#tabPuzzle', !object]]) {
+      $(id).setAttribute('aria-selected', String(active)); $(id).tabIndex = active ? 0 : -1;
+    }
+  }
+  $('#tabObject').onclick = () => showProperties('object');
+  $('#tabPuzzle').onclick = () => showProperties('puzzle');
+  document.querySelector('.properties-tabs').addEventListener('keydown', ev => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(ev.key)) return;
+    ev.preventDefault();
+    const object = ev.key === 'Home' || (ev.key !== 'End' && $('#tabObject').getAttribute('aria-selected') !== 'true');
+    showProperties(object ? 'object' : 'puzzle'); $(object ? '#tabObject' : '#tabPuzzle').focus();
+  });
   function inspector() {
     const box = $('#objectInspector'); box.replaceChildren();
     const p=level.parts[selected];
@@ -169,10 +184,6 @@
     const acts=document.createElement('div'); acts.className='object-actions';
     const duplicate=document.createElement('button'); duplicate.className='button'; duplicate.textContent='Duplicate'; duplicate.onclick=duplicateSelected;
     const remove=document.createElement('button'); remove.className='button danger'; remove.textContent='Remove'; remove.onclick=removeSelected; acts.append(duplicate,remove); box.append(acts);
-    const advanced=document.createElement('details'); advanced.className='advanced'; const title=document.createElement('summary'); title.textContent='Advanced object JSON';
-    const area=document.createElement('textarea'); area.setAttribute('aria-label','Object JSON'); area.value=JSON.stringify(p,null,2);
-    const apply=document.createElement('button'); apply.className='button'; apply.textContent='Apply object JSON'; apply.onclick=()=>change(()=>level.parts[selected]=JSON.parse(area.value));
-    advanced.append(title,area,apply); box.append(advanced);
   }
   function removeSelected() { if(selected>=0) change(()=>{level.parts.splice(selected,1);selected=-1;}); }
   function duplicateSelected() {
@@ -191,6 +202,7 @@
   cv.addEventListener('pointerdown',ev=>{
     if(ev.button>0) return; ev.preventDefault(); cv.focus({preventScroll:true}); try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* Pointer may already have been released. */ }
     const q=point(ev), before=snapshot();
+    showProperties('object');
     if(tool!=='select') {
       if(level.parts.length>=120) {notify('A puzzle can have up to 120 objects.');return;}
       const def=toys.find(t=>t[0]===tool)[3](q);
