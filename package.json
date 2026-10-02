@@ -10,7 +10,7 @@
     "backend:dev": "convex dev",
     "typecheck": "tsc --noEmit",
     "test:cloud": "node test/cloud-smoke.js",
-    "test": "node --test test/editor.test.js && node test/crayons.js && node test/verify.js",
+    "test": "node --test test/editor.test.js test/cloud-policy.test.js && node test/crayons.js && node test/verify.js",
     "check": "node tools/syntax.js"
   },
   "license": "MIT",

@@ -25,7 +25,7 @@
 
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage is a convenience */ } CC.Cloud?.write(k, v); }
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage is a convenience */ } if (k === 'pd-game-progress') CC.Cloud?.write(k, v); }
   };
 
   const st = {

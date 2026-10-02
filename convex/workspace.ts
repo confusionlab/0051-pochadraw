@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { stateKey } from "./schema";
 
 const jsonObject = (json: string, limit: number) => {
@@ -21,8 +21,11 @@ export const snapshot = query({
   args: {},
   returns: v.array(v.object({ key: stateKey, json: v.string() })),
   handler: async ctx => {
-    const rows = await ctx.db.query("state").withIndex("by_key").take(4);
-    return rows.map(({ key, json }) => ({ key, json }));
+    const rows = await Promise.all((["draft", "progress"] as const).map(async key => {
+      const row = await ctx.db.query("state").withIndex("by_key", q => q.eq("key", key)).unique();
+      return row ? { key, json: row.json } : null;
+    }));
+    return rows.filter(row => row !== null);
   },
 });
 
@@ -30,7 +33,7 @@ export const saveState = mutation({
   args: { key: stateKey, json: v.string() },
   returns: v.null(),
   handler: async (ctx, { key, json }) => {
-    const value = jsonObject(json, key === "strokes" ? 500000 : key === "draft" ? 220000 : 12000);
+    const value = jsonObject(json, key === "draft" ? 220000 : 12000);
     const existing = await ctx.db.query("state").withIndex("by_key", q => q.eq("key", key)).unique();
     if (key === "draft") puzzle(json);
     if (key === "progress") {
@@ -41,7 +44,6 @@ export const saveState = mutation({
       for (const [id, stars] of Object.entries(value)) saved[id] = Math.max(saved[id] || 0, Number(stars));
       json = JSON.stringify(saved);
     }
-    if (key === "preferences") json = JSON.stringify({ ...(existing ? JSON.parse(existing.json) : {}), ...value });
     if (existing) await ctx.db.patch(existing._id, { json });
     else await ctx.db.insert("state", { key, json });
     return null;
@@ -79,5 +81,19 @@ export const savePuzzle = mutation({
     if (existing) await ctx.db.patch(existing._id, fields);
     else await ctx.db.insert("puzzles", fields);
     return null;
+  },
+});
+
+// One-time administrative cleanup for saves made before the cloud policy changed.
+export const discardTemporaryState = internalMutation({
+  args: {},
+  returns: v.number(),
+  handler: async ctx => {
+    let removed = 0;
+    for (const key of ["strokes", "preferences"] as const) {
+      const row = await ctx.db.query("state").withIndex("by_key", q => q.eq("key", key)).unique();
+      if (row) { await ctx.db.delete(row._id); removed++; }
+    }
+    return removed;
   },
 });

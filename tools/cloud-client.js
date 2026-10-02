@@ -3,7 +3,7 @@ import { api } from '../convex/_generated/api.js';
 
 const CC = window.CC || (window.CC = {});
 const url = window.POCHADRAW_CONVEX_URL;
-const cacheKeys = { draft: 'pochadraw-draft', progress: 'pd-game-progress', strokes: 'pd-game-strokes' };
+const cacheKeys = { draft: 'pochadraw-draft', progress: 'pd-game-progress' };
 const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
 const put = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* cloud remains available if cache is full */ } };
 const emit = (key, value) => window.dispatchEvent(new CustomEvent('pochadraw:cloud', { detail: { key, value } }));
@@ -17,7 +17,11 @@ if (Cloud.enabled) {
   const client = new ConvexClient(url);
   Cloud.client = client;
   const pendingKey = 'pochadraw-cloud-pending';
-  let pending = read(pendingKey, {}), hydrated = false, flushing = false, libraryVersion = 0, retry;
+  // Older versions queued gameplay drawings and preferences. Never upload those retries.
+  const isCloudSave = key => key.startsWith('puzzle:') || key === 'state:draft' || key === 'state:progress';
+  let pending = Object.fromEntries(Object.entries(read(pendingKey, {})).filter(([key]) => isCloudSave(key)));
+  put(pendingKey, pending);
+  let hydrated = false, flushing = false, libraryVersion = 0, retry;
   let library = read('pochadraw-library', []), revisions = new Map(), remotePuzzles = new Map();
   const persist = () => put(pendingKey, pending);
   function enqueue(key, value) {
@@ -26,11 +30,9 @@ if (Cloud.enabled) {
   }
   function applyStates(rows) {
     for (const { key, json } of rows) {
-      if (Object.hasOwn(pending, 'state:' + key)) continue;
+      if (!Object.hasOwn(cacheKeys, key) || Object.hasOwn(pending, 'state:' + key)) continue;
       const value = JSON.parse(json);
-      if (key === 'preferences') {
-        for (const [name, preference] of Object.entries(value)) put(name, preference);
-      } else put(cacheKeys[key], value);
+      put(cacheKeys[key], value);
       emit(key, value);
     }
   }
@@ -60,11 +62,6 @@ if (Cloud.enabled) {
     } else {
       const state = Object.keys(cacheKeys).find(name => cacheKeys[name] === key);
       if (state) enqueue('state:' + state, JSON.stringify(value));
-      else if (/^pd-game-(level|muted|seen-help|seen-world-[0-9])$/.test(key)) {
-        const preferences = { ...read('pochadraw-cloud-preferences', {}), [key]: value };
-        put('pochadraw-cloud-preferences', preferences);
-        enqueue('state:preferences', JSON.stringify(preferences));
-      }
     }
   };
   async function flush() {

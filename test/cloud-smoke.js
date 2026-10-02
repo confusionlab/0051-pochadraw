@@ -39,10 +39,33 @@ try {
   assert.equal(scores['first-scribble'], 3);
   const rejected = evaluate(sessions[0], `(async () => {try{await CC.Cloud.client.mutation('workspace:saveState',{key:'progress',json:JSON.stringify({'first-scribble':9})});return false;}catch{return true;}})()`);
   assert.equal(rejected, true);
-  console.log('PASS best-score merge and invalid score rejection');
+  for (const key of ['strokes', 'preferences']) {
+    const rejected = evaluate(sessions[0], `(async () => {try{await CC.Cloud.client.mutation('workspace:saveState',{key:${JSON.stringify(key)},json:'{}'});return false;}catch{return true;}})()`);
+    assert.equal(rejected, true);
+  }
+  console.log('PASS best-score merge, invalid scores and temporary-save rejection');
   evaluate(sessions[0], `(async () => {await CC.Cloud.client.mutation('workspace:savePuzzle',{key:${JSON.stringify(id)},json:null});return true;})()`);
   call(sessions[1], 'wait', '--fn', `!CC.LevelKit.read('library', []).some(l => l.id === ${JSON.stringify(id)})`);
   console.log('PASS deletion syncs between browsers');
+  call(sessions[0], 'open', new URL('index.html', base).href);
+  call(sessions[0], 'wait', '--fn', '!!window.CCDBG && CC.Cloud.status === "Saved to cloud"');
+  evaluate(sessions[0], `(() => {
+    Object.defineProperty(navigator,'onLine',{get:()=>false,configurable:true});
+    window.dispatchEvent(new Event('offline'));
+    CCDBG.loadLevel(2);document.querySelector('[data-act=intro]')?.click();
+    document.querySelector('#btnSound').click();
+    return true;
+  })()`);
+  const board = evaluate(sessions[0], 'document.querySelector("#cv").getBoundingClientRect().toJSON()');
+  call(sessions[0], 'mouse', 'move', String(Math.round(board.x + board.width * .3)), String(Math.round(board.y + board.height * .5)));
+  call(sessions[0], 'mouse', 'down');
+  call(sessions[0], 'mouse', 'move', String(Math.round(board.x + board.width * .5)), String(Math.round(board.y + board.height * .6)));
+  call(sessions[0], 'mouse', 'up');
+  call(sessions[0], 'wait', '500');
+  assert.ok(evaluate(sessions[0], 'Object.values(JSON.parse(localStorage.getItem("pd-game-strokes"))).some(strokes => strokes.length > 0)'));
+  assert.deepEqual(evaluate(sessions[0], 'JSON.parse(localStorage.getItem("pochadraw-cloud-pending"))'), {});
+  evaluate(sessions[0], 'delete navigator.onLine; window.dispatchEvent(new Event("online")); true');
+  console.log('PASS actual gameplay drawings, navigation and sound changes stay local');
   for (const session of sessions) assert.equal(call(session, 'errors'), '');
 } finally {
   for (const session of sessions) try { call(session, 'close'); } catch {}
