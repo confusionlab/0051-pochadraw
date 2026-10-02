@@ -62,10 +62,8 @@
     const used = inkUsed();
     return used <= lv.par[0] + 1e-6 ? 3 : used <= lv.par[1] + 1e-6 ? 2 : 1;
   }
-  function totalStars() { return LEVELS.filter(l => !l.custom).reduce((a, l) => a + (st.progress[l.id] || 0), 0); }
-  function syncTotal() { $('#totalStars').innerHTML = `&#9733; ${totalStars()} / ${campaignCount * 3}`; }
   window.addEventListener('pochadraw:cloud', ({ detail }) => {
-    if (detail.key === 'progress') { st.progress = detail.value; syncTotal(); }
+    if (detail.key === 'progress') { st.progress = detail.value; }
   });
 
   /* ---------- sizing & the cached background ---------- */
@@ -122,8 +120,7 @@
     st.level = LEVELS[st.li];
     st.world = WORLDS[st.level.world] || WORLDS[0];
     if (st.level.custom) st.world = { ...st.world, paper: st.level.paper || st.world.paper };
-    $('#editPuzzle').href = st.level.custom ? 'editor.html#level=' + CC.LevelKit.encode(st.level) : 'editor.html?campaign=' + st.li;
-    $('#editPuzzle').textContent = st.level.custom ? '✎ Edit this puzzle' : '✎ Remix this puzzle';
+    $('#btnLevels').href = 'editor.html?tab=levels&world=' + (st.level.world || 0);
     if (!st.level.crayons.includes(st.tool)) st.tool = st.level.crayons[0];
     st.fx = []; st.confetti = []; st.hintUntil = 0; st.fails = 0;
     newSim();
@@ -452,7 +449,7 @@
     st.wonShown = true; st.mode = 'won'; syncGo();
     const lv = st.level, stars = starsFor(lv, st.sim);
     const prev = st.progress[lv.id] || 0;
-    if (stars > prev) { st.progress[lv.id] = stars; store.set('pd-game-progress', st.progress); syncTotal(); }
+    if (stars > prev) { st.progress[lv.id] = stars; store.set('pd-game-progress', st.progress); }
     const lastLevel = !lv.custom && st.li === campaignCount - 1;
     if (lv.custom && preview && window.parent !== window) {
       const recorded = live() ? st.liveRecs.map(rec => ({ ...rec.stroke, at: rec.born })) : strokes();
@@ -517,29 +514,8 @@
     else if (a === 'world') showLevels(Number(b.dataset.w));
   });
   function showLevels(wi) {
-    const w = wi != null ? wi : st.level.world;
-    const tabs = WORLDS.map((W, i) => {
-      const got = LEVELS.filter(l => !l.custom && l.world === i).reduce((a, l) => a + (st.progress[l.id] || 0), 0);
-      return `<button class="wtab" type="button" role="tab" aria-selected="${i === w}" data-act="world" data-w="${i}"><b>${i + 1}. ${W.name}</b><small>&#9733; ${got}/30</small></button>`;
-    }).join('');
-    const cards = LEVELS.map((lv, i) => ({ lv, i })).filter(x => !x.lv.custom && x.lv.world === w).map(({ lv, i }) => {
-      const s = st.progress[lv.id] || 0;
-      const stars = [1, 2, 3].map(n => `<span class="${n <= s ? '' : 'off'}">&#9733;</span>`).join('');
-      return `<button class="lvl${i === st.li ? ' current' : ''}${lv.bossLevel ? ' boss' : ''}" type="button" data-act="pick" data-i="${i}" aria-label="Level ${lv.n}: ${lv.name}${lv.bossLevel ? ', boss' : ''}${lv.live ? ', live' : ''}, ${s} stars">
-        <canvas width="320" height="180" data-thumb="${i}"></canvas>
-        <span class="ln"><b>${lv.n}. ${lv.name}</b><span class="st">${stars}</span></span></button>`;
-    }).join('');
-    showOverlay(`<div class="panel" style="max-width:none;width:100%">
-      <div class="levels-head"><h2>${WORLDS[w].name}</h2><span class="total">&#9733; ${totalStars()} of ${campaignCount * 3}</span><button class="chip" type="button" data-act="close">Close</button></div>
-      <div class="world-tabs" role="tablist">${tabs}</div>
-      <div class="level-grid">${cards}</div></div>`);
-    document.querySelectorAll('canvas[data-thumb]').forEach(c => {
-      const lv = LEVELS[Number(c.dataset.thumb)];
-      const sim = new Sim(lv, lv.live ? [] : (st.strokes[lv.id] || []));
-      const g = staticInto(c.getContext('2d'), 0, sim, 0.2, (WORLDS[lv.world] || WORLDS[0]).paper);
-      for (const p of sim.parts) { const R = Draw.R[p.type]; if (R && R.live) R.live(g, p, sim); }
-      Draw.strokes(g, sim, null);
-    });
+    const world = wi != null ? wi : st.level.world;
+    location.href = 'editor.html?tab=levels&world=' + world;
   }
   function showWorldIntro() {
     const w = st.world, t = w.crayon;
@@ -653,10 +629,6 @@
   $('#btnHint').addEventListener('click', hint);
   $('#btnFailHint').addEventListener('click', hint);
   $('#btnFailRewind').addEventListener('click', () => { if (live()) restart(); else rewind(); });
-  $('#btnLevels').addEventListener('click', () => { Audio.unlock(); showLevels(); });
-  const snd = $('#btnSound');
-  function syncSound() { snd.setAttribute('aria-pressed', String(!Audio.muted)); snd.textContent = Audio.muted ? 'Sound off' : 'Sound on'; }
-  snd.addEventListener('click', () => { Audio.unlock(); Audio.setMuted(!Audio.muted); store.set('pd-game-muted', Audio.muted); syncSound(); });
   window.addEventListener('keydown', ev => {
     if (ev.target.closest && ev.target.closest('input, textarea')) return;
     const key = ev.key.toLowerCase();
@@ -679,7 +651,7 @@
   function start(data) {
     const saved = (data && data.strokes) || store.get('pd-game-strokes', {});
     for (const id in saved) st.strokes[id] = saved[id];
-    Audio.setMuted(store.get('pd-game-muted', false)); syncSound(); syncTotal();
+    Audio.setMuted(false);
     let shared = null;
     const hash = new URLSearchParams(location.hash.slice(1));
     if (hash.has('level')) {
@@ -687,7 +659,10 @@
       catch (e) { toast(e.message, 7000); }
     }
     if (shared) { st.strokes[shared.id] = []; loadLevel(LEVELS.length - 1); }
-    else loadLevel(Math.min(campaignCount - 1, data && data.li != null ? data.li : store.get('pd-game-level', 0)));
+    else {
+      const selected = new URLSearchParams(location.search).get('level');
+      loadLevel(Math.max(0, Math.min(campaignCount - 1, selected != null ? Number(selected) || 0 : data && data.li != null ? data.li : store.get('pd-game-level', 0))));
+    }
     resize();
     if (document.fonts && document.fonts.load) {
       Promise.all([document.fonts.load('700 30px "Cabin Sketch"'), document.fonts.load('30px "Patrick Hand"')]).then(() => { CC.clearSprites(); cr.pats.clear(); buildStatic(); }).catch(() => {});

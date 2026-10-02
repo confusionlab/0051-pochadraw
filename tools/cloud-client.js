@@ -12,7 +12,7 @@ const status = (message) => {
   document.querySelectorAll('[data-cloud-status]').forEach(el => el.textContent = message);
 };
 const preview = new URLSearchParams(location.search).has('preview');
-const Cloud = CC.Cloud = { enabled: !!url && !preview, ready: Promise.resolve(), status: url ? 'Connecting…' : 'Saved in this browser', write() {}, flush: async () => {} };
+const Cloud = CC.Cloud = { enabled: !!url && !preview, ready: Promise.resolve(), status: url && !preview ? 'Connecting…' : 'Saved in this browser', write() {}, flush: async () => {} };
 if (Cloud.enabled) {
   const client = new ConvexClient(url);
   Cloud.client = client;

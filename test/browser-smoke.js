@@ -10,10 +10,10 @@ const state = () => evalJS('CC.LevelKit.read("draft", null)');
 const settle = () => browser('wait','350');
 function pointer(type,x,y) { evalJS(`(() => { const cv=document.querySelector('#editorCanvas'),r=cv.getBoundingClientRect();cv.dispatchEvent(new PointerEvent('${type}',{bubbles:true,clientX:r.left+${x}/16*r.width,clientY:r.top+${y}/9*r.height,pointerId:1,button:0,buttons:${type==='pointerup'?0:1}}));return true;})()`); }
 try {
-  browser('open',new URL('editor.html',base).href);
+  browser('open',new URL('editor.html?preview=1',base).href);
   evalJS('localStorage.clear(); true');
   browser('reload');settle();
-  assert.equal(state().parts.length,3);
+  click('#newLevel');settle();assert.equal(state().parts.length,3);
   click('[data-toy="block"]');pointer('pointerdown',7,4);pointer('pointerup',7,4);settle();
   assert.equal(state().parts.length,4);assert.equal(state().solution.length,0);
   pointer('pointerdown',7,4);pointer('pointermove',8,5);pointer('pointerup',8,5);settle();
@@ -23,7 +23,12 @@ try {
   click('.object-actions .button');settle();assert.equal(state().parts.length,5);
   click('.object-actions .danger');settle();assert.equal(state().parts.length,4);
   console.log('PASS place, select, drag, duplicate, delete, undo and redo');
-  click('#remixLevel');click('.remix-card:first-child');
+  click('#tabLevels');
+  assert.equal(evalJS('document.querySelectorAll(".campaign-card").length'),10);
+  assert.equal(evalJS('document.querySelector("#studioPanel").hidden'),true);
+  click('.campaign-card:first-child button');
+  assert.equal(evalJS('document.querySelector("#tabStudio").getAttribute("aria-selected")'),'true');
+  console.log('PASS Levels and Studio tabs, campaign browsing and editing');
   browser('fill','#levelName','포차 ✎ café');browser('press','Tab');settle();
   click('#saveLevel');
   assert.ok(evalJS('CC.LevelKit.read("library",[]).some(l=>l.name==="포차 ✎ café")'));
@@ -55,13 +60,14 @@ try {
   click('#exportLevel');assert.ok(evalJS('window.__download.name.endsWith(".pochadraw.json") && window.__download.href.startsWith("blob:")'));
   evalJS('HTMLAnchorElement.prototype.click=window.__anchorClick;true');
   console.log('PASS share encoding, JSON file import and export download');
-  browser('open',share);browser('wait','--load','networkidle');
+  const sharedPreview=new URL(share);sharedPreview.searchParams.set('preview','1');
+  browser('open',sharedPreview.href);browser('wait','--load','networkidle');
   assert.equal(evalJS('CCDBG.st.level.name'),'포차 ✎ café');
   assert.equal(evalJS('document.querySelector("#overlay").hidden'),true);
-  assert.equal(evalJS('document.querySelector("#editPuzzle").textContent'),'✎ Edit this puzzle');
+  assert.equal(evalJS('new URL(document.querySelector("#btnLevels").href).searchParams.get("tab")'),'levels');
   assert.equal(evalJS('CCDBG.st.level.custom'),true);
   console.log('PASS shared link opens as a playable custom puzzle');
-  browser('open',new URL('editor.html',base).href);
+  browser('open',new URL('editor.html?preview=1',base).href);
   browser('set','viewport','390','844');settle();
   assert.ok(evalJS('document.documentElement.scrollWidth <= innerWidth'));
   assert.ok(evalJS('document.querySelector("#editorCanvas").getBoundingClientRect().width > 250'));

@@ -53,7 +53,6 @@ try {
     Object.defineProperty(navigator,'onLine',{get:()=>false,configurable:true});
     window.dispatchEvent(new Event('offline'));
     CCDBG.loadLevel(2);document.querySelector('[data-act=intro]')?.click();
-    document.querySelector('#btnSound').click();
     return true;
   })()`);
   const board = evaluate(sessions[0], 'document.querySelector("#cv").getBoundingClientRect().toJSON()');
@@ -65,7 +64,7 @@ try {
   assert.ok(evaluate(sessions[0], 'Object.values(JSON.parse(localStorage.getItem("pd-game-strokes"))).some(strokes => strokes.length > 0)'));
   assert.deepEqual(evaluate(sessions[0], 'JSON.parse(localStorage.getItem("pochadraw-cloud-pending"))'), {});
   evaluate(sessions[0], 'delete navigator.onLine; window.dispatchEvent(new Event("online")); true');
-  console.log('PASS actual gameplay drawings, navigation and sound changes stay local');
+  console.log('PASS actual gameplay drawings and navigation stay local');
   for (const session of sessions) assert.equal(call(session, 'errors'), '');
 } finally {
   for (const session of sessions) try { call(session, 'close'); } catch {}

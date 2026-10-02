@@ -38,17 +38,17 @@
   try { sketchbook = sketchbook.map(l => Kit.validate(l)).slice(0, 100); } catch (e) { sketchbook = []; }
   window.addEventListener('pochadraw:cloud', ({ detail }) => {
     if (detail.key === 'library') {
-      try { sketchbook = detail.value.map(l => Kit.validate(l)); $('#savedCount').textContent = sketchbook.length; if ($('#libraryDialog').open) library(); }
+      try { sketchbook = detail.value.map(l => Kit.validate(l)); $('#savedCount').textContent = sketchbook.length; if (!$('#levelsPanel').hidden) library(); }
       catch (e) { notify('A cloud puzzle could not be opened.'); }
     }
   });
   const snapshot = () => ({ level: Kit.clone(level), selected });
   const notify = message => { $('#notification').textContent = message; $('#notification').hidden = false; clearTimeout(noteTimer); noteTimer = setTimeout(() => $('#notification').hidden = true, 3800); };
   function saveDraft() {
-    clearTimeout(draftTimer); $('#saveState').textContent = 'Saving…';
+    clearTimeout(draftTimer);
     draftTimer = setTimeout(() => {
-      try { Kit.write('draft', level); $('#saveState').textContent = 'Draft saved'; }
-      catch (e) { $('#saveState').textContent = 'Export to keep a copy'; notify('Browser storage is full or unavailable. Export your puzzle as JSON.'); }
+      try { Kit.write('draft', level); }
+      catch (e) { notify('Browser storage is full or unavailable. Export your puzzle as JSON.'); }
     }, 200);
   }
   function remember(before) { history.push(before); if (history.length > 70) history.shift(); future = []; }
@@ -222,7 +222,7 @@
   }
   cv.addEventListener('pointerup',()=>finishDrag(false));cv.addEventListener('pointercancel',()=>finishDrag(true));
   window.addEventListener('keydown',ev=>{
-    if(ev.target.closest('input,textarea,select')||document.querySelector('dialog[open]'))return;
+    if(ev.defaultPrevented || $('#studioPanel').hidden || ev.target.closest('input,textarea,select') || document.querySelector('dialog[open]'))return;
     const mod=ev.ctrlKey||ev.metaKey,key=ev.key.toLowerCase();
     if(mod&&key==='z'){ev.preventDefault();undo(ev.shiftKey);}
     else if(mod&&key==='y'){ev.preventDefault();undo(true);}
@@ -254,14 +254,51 @@
       const card=document.createElement('article');card.className='saved-card';const text=document.createElement('div');const title=document.createElement('h3');title.textContent=lv.name;
       const meta=document.createElement('p');meta.textContent=lv.parts.length+' objects · '+(lv.hintVerified?'Solved hint included':lv.solution.length?'Hint included':'No hint yet');text.append(title,meta);
       const actions=document.createElement('div');actions.className='actions';
-      const edit=document.createElement('button');edit.className='button';edit.textContent='Edit';edit.onclick=()=>{if(preserveDraft()){setLevel(lv);$('#libraryDialog').close();}};
-      const play=document.createElement('a');play.className='button';play.textContent='Play ↗';play.target='_blank';play.rel='noopener';play.href='index.html#level='+Kit.encode(lv);
+      const edit=document.createElement('button');edit.className='button';edit.textContent='Edit';edit.onclick=()=>{if(preserveDraft()){setLevel(lv);showTab('studio');}};
+      const play=document.createElement('a');play.className='button';play.textContent='Play';play.href='index.html#level='+Kit.encode(lv);
       const del=document.createElement('button');del.className='text-button danger';del.textContent='×';del.setAttribute('aria-label','Remove '+lv.name+' from sketchbook');
       del.onclick=()=>{const old=sketchbook;sketchbook=sketchbook.filter(l=>l.id!==lv.id);if(!writeLibrary())sketchbook=old;library();notify('Removed from sketchbook. The open draft is kept.');};
       actions.append(edit,play,del);card.append(text,actions);list.append(card);
     }
   }
-  $('#openLibrary').onclick=()=>{library();$('#libraryDialog').showModal();};
+  function showTab(name, updateUrl = true) {
+    const levels = name === 'levels';
+    $('#levelsPanel').hidden = !levels; $('#studioPanel').hidden = levels;
+    for (const [id, selected] of [['#tabLevels', levels], ['#tabStudio', !levels]]) {
+      $(id).setAttribute('aria-selected', String(selected)); $(id).tabIndex = selected ? 0 : -1;
+    }
+    if (levels) { campaignList(); library(); } else render();
+    if (updateUrl) { const url = new URL(location.href); url.searchParams.set('tab', name); window.history.replaceState(null, '', url); }
+  }
+  $('#tabLevels').onclick = () => showTab('levels');
+  $('#tabStudio').onclick = () => showTab('studio');
+  document.querySelector('.workspace-tabs').addEventListener('keydown', ev => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(ev.key)) return;
+    ev.preventDefault();
+    const levels = ev.key === 'Home' || (ev.key !== 'End' && $('#tabLevels').getAttribute('aria-selected') !== 'true');
+    showTab(levels ? 'levels' : 'studio'); $(levels ? '#tabLevels' : '#tabStudio').focus();
+  });
+  function campaignList() {
+    const list = $('#campaignList'); list.replaceChildren();
+    const progress = JSON.parse(localStorage.getItem('pd-game-progress') || '{}');
+    LEVELS.filter(lv => lv.world === Number($('#browseWorld').value)).forEach(lv => {
+      const card = document.createElement('article'); card.className = 'campaign-card';
+      const thumbnail = document.createElement('a'); thumbnail.href = 'index.html?level=' + (lv.n - 1); thumbnail.setAttribute('aria-label', 'Play ' + lv.name);
+      const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 180; canvas.setAttribute('aria-hidden', 'true'); thumbnail.append(canvas);
+      const title = document.createElement('h3'); title.textContent = lv.n + '. ' + lv.name;
+      const goal = document.createElement('p'); goal.textContent = lv.story;
+      const actions = document.createElement('div'); actions.className = 'level-actions';
+      const stars = document.createElement('span'); stars.className = 'level-stars'; stars.textContent = '★'.repeat(progress[lv.id] || 0) + '☆'.repeat(3 - (progress[lv.id] || 0)); stars.setAttribute('aria-label', (progress[lv.id] || 0) + ' stars');
+      const play = document.createElement('a'); play.className = 'button'; play.textContent = 'Play'; play.href = thumbnail.href;
+      const edit = document.createElement('button'); edit.className = 'button'; edit.textContent = 'Edit'; edit.onclick = () => { if (preserveDraft()) { setLevel(Kit.remix(lv)); showTab('studio'); } };
+      actions.append(stars, play, edit); card.append(thumbnail, title, goal, actions); list.append(card); drawTo(canvas, lv);
+    });
+  }
+  WORLDS.forEach((world, i) => { const option = document.createElement('option'); option.value = i; option.textContent = (i + 1) + '. ' + world.name; $('#browseWorld').append(option); });
+  $('#browseWorld').value = Math.max(0, Math.min(WORLDS.length - 1, Number(new URLSearchParams(location.search).get('world')) || 0));
+  $('#browseWorld').onchange = () => { campaignList(); const url = new URL(location.href); url.searchParams.set('world', $('#browseWorld').value); window.history.replaceState(null, '', url); };
+  $('#createLevel').onclick = () => { if (preserveDraft()) { setLevel(Kit.blank()); showTab('studio'); } };
+  window.addEventListener('pochadraw:cloud', ({ detail }) => { if (detail.key === 'progress' && !$('#levelsPanel').hidden) campaignList(); });
   WORLDS.forEach((world,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+world.name;$('#worldFilter').append(o);});
   function remixList(){
     const list=$('#remixList');list.replaceChildren();
@@ -317,7 +354,8 @@
     else if(new URLSearchParams(location.search).has('campaign'))level=Kit.remix(LEVELS[Math.max(0,Math.min(99,Number(new URLSearchParams(location.search).get('campaign'))||0))]);
     else level=Kit.validate(Kit.read('draft',null)||Kit.blank());
   }catch(e){level=Kit.blank();notify(e.message);}
-  $('#savedCount').textContent=sketchbook.length;refresh();saveDraft();
+  $('#savedCount').textContent=sketchbook.length;refresh();
+  if (new URLSearchParams(location.search).has('campaign') || new URLSearchParams(location.hash.slice(1)).has('level')) saveDraft();
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{CC.clearSprites();cr.pats.clear();render();});
-  if(new URLSearchParams(location.search).has('library')){library();$('#libraryDialog').showModal();}
+  showTab(new URLSearchParams(location.search).get('tab') === 'levels' || new URLSearchParams(location.search).has('library') ? 'levels' : 'studio', false);
 })();

@@ -3,31 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f5efe2">
+<meta name="theme-color" content="#C49A6C">
 <title>Pochadraw — Contraption Studio</title>
 <meta name="description" content="Make your own crayon physics puzzles. Remix 100 contraptions, draw a solution, and share your creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Patrick+Hand&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/editor.css">
+<link rel="stylesheet" href="css/base.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='m3 29 4-12L24 0l8 8-17 17Z' fill='%23db5140'/%3E%3C/svg%3E">
 </head>
 <body>
 <div class="studio">
-  <header class="studio-header">
-    <a class="wordmark" href="index.html" aria-label="Pochadraw — play"><span class="brand-mark">p.</span>pocha<span>draw</span></a>
-    <nav class="mode-nav" aria-label="App mode"><a href="index.html">Play puzzles <span>100</span></a><a href="editor.html" aria-current="page">Make a puzzle <span>✎</span></a></nav>
-    <button class="button small" id="openLibrary">My sketchbook <span id="savedCount">0</span></button>
-    <span class="micro" data-cloud-status role="status">Connecting…</span>
+  <header class="top">
+    <a class="logo" href="index.html" aria-label="Pochadraw — play"><span class="w1">Pocha</span><span class="w2">draw</span></a>
+    <nav class="workspace-tabs" role="tablist" aria-label="Workspace">
+      <button class="chip" id="tabLevels" role="tab" aria-controls="levelsPanel" aria-selected="false" tabindex="-1">Levels</button>
+      <button class="chip" id="tabStudio" role="tab" aria-controls="studioPanel" aria-selected="true">Studio</button>
+    </nav>
+    <a class="chip" href="index.html">← Play</a>
   </header>
-  <section class="studio-intro">
-    <div><p class="eyebrow">THE CONTRAPTION STUDIO</p><h1>Little drawings.<br><em>Big possibilities.</em></h1></div>
-    <p>Put a ball here. A basket there.<br>Leave a little room for imagination.</p>
-    <span class="intro-doodle" aria-hidden="true">↝<span>your idea goes here</span></span>
+  <section id="levelsPanel" class="levels-browser" role="tabpanel" aria-labelledby="tabLevels" hidden>
+    <div class="browse-heading"><h1>Levels</h1><label class="world-picker">World <select id="browseWorld"></select></label></div>
+    <div id="campaignList" class="campaign-grid"></div>
+    <div class="browse-heading"><h2>Your levels <span id="savedCount">0</span></h2><button class="chip" id="createLevel">＋ New level</button></div>
+    <div id="libraryList" class="library-list"></div>
   </section>
+  <section id="studioPanel" role="tabpanel" aria-labelledby="tabStudio">
   <div class="document-bar">
-    <div class="document-name"><span class="doc-icon" aria-hidden="true">▤</span><input id="levelName" maxlength="80" aria-label="Level name" placeholder="Name your contraption"><span class="saved-state" id="saveState">Draft saved</span></div>
-    <div class="document-actions"><button class="button" id="newLevel">＋ New</button><button class="button" id="remixLevel">Remix a level</button><button class="button ink" id="saveLevel">Save to sketchbook</button></div>
+    <div class="document-name"><span class="doc-icon" aria-hidden="true">▤</span><input id="levelName" maxlength="80" aria-label="Level name" placeholder="Name your contraption"></div>
+    <div class="document-actions"><button class="button" id="newLevel">＋ New</button><button class="button" id="remixLevel">Remix a level</button><div class="save-action"><button class="button ink" id="saveLevel">Save</button><span class="micro" data-cloud-status role="status">Connecting…</span></div></div>
   </div>
   <main class="workbench">
     <aside class="palette panel" aria-label="Object palette">
@@ -56,11 +61,10 @@
       </details>
     </aside>
   </main>
-  <footer class="studio-footer"><span>Made for curious minds &amp; messy drawings.</span><a href="https://github.com/confusionlab/0051-pochadraw" target="_blank" rel="noopener">Open source · Built on Crayon Contraptions ↗</a></footer>
+  </section>
 </div>
 <div id="notification" class="notification" role="status" aria-live="polite" hidden></div>
 <input type="file" id="fileInput" accept=".json,application/json" hidden>
-<dialog id="libraryDialog" class="modal"><div class="modal-heading"><div><p class="eyebrow">YOUR COLLECTION</p><h2>My sketchbook</h2></div><button class="icon-button" data-close aria-label="Close sketchbook">×</button></div><p class="micro" data-cloud-status role="status">Connecting…</p><div id="libraryList" class="library-list"></div></dialog>
 <dialog id="remixDialog" class="modal wide"><div class="modal-heading"><div><p class="eyebrow">A LITTLE HEAD START</p><h2>Make it your own.</h2></div><button class="icon-button" data-close aria-label="Close level picker">×</button></div><label class="field">Choose a world<select id="worldFilter"></select></label><div id="remixList" class="remix-grid"></div></dialog>
 <dialog id="shareDialog" class="modal"><div class="modal-heading"><div><p class="eyebrow">PASS THE PAPER</p><h2>Share your puzzle.</h2></div><button class="icon-button" data-close aria-label="Close share link">×</button></div><p>Anyone with the link can play your puzzle and remix it. The whole level travels in the link.</p><label class="field">Playable link<textarea id="shareUrl" rows="4" readonly></textarea></label><div class="modal-actions"><button class="button ink" id="copyShare">Copy link</button><a class="button" id="openShare" target="_blank" rel="noopener">Open puzzle ↗</a></div><p class="micro">For large puzzles, a JSON file is easier to share.</p></dialog>
 <dialog id="testDialog" class="test-modal"><div class="preview-heading"><div><p class="eyebrow">PLAYTEST</p><strong id="testTitle"></strong></div><span id="testStatus">Draw your solution, then press GO.</span><button class="button" id="recordHint" hidden>Keep this solution as a hint</button><button class="button ink" id="backToEditor">← Back to editing</button></div><iframe id="playFrame" title="Playtest your contraption"></iframe></dialog>

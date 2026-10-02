@@ -20,6 +20,8 @@ Draw the missing parts of a machine and press **GO**. Seven crayons have differe
 - **Test & draw** uses the original game and physics. Complete the puzzle, then keep your winning drawing as a hint. The studio replays the drawing before accepting it.
 - Export/import `.pochadraw.json` files or share a playable URL. Receivers can open the puzzle in the editor and remix it.
 
+The game’s Levels button opens a shared workspace with **Levels** and **Studio** tabs. Browse campaign and saved puzzles in Levels; choose Edit or switch to Studio to build a puzzle. Both views share the game’s wood background, top bar and paper controls. Save status appears beside Save in Studio.
+
 Custom puzzles, editor drafts and completed-level star progress save to a shared Convex workspace. Gameplay drawings, the selected level, sound preferences and tutorial state stay in browser storage and never upload or restore from the cloud. There is one workspace, with no authentication or user scoping. Browser storage caches saves offline; pending changes retry when the connection returns. Star saves keep the best score. Share links still contain the level itself. Export JSON for portable backups. Live puzzle hint capture is replay-checked; erasing during a live run may require drawing a fresh solution to record a reproducible hint.
 
 ## Run locally
