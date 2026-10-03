@@ -24,7 +24,8 @@
   Object.assign(labels, {lips:'Side stops',xs:'Drop offsets'});
   const appearances = ['grumbox','knight','jelly','cloud','eater','clock','snail','robot','king','dragon'];
   const names = {rubber:'Standard',tennis:'Bouncy',marble:'Marble',bowling:'Heavy',beach:'Light',steel:'Steel',egg:'Fragile',meatball:'Soft',ball:'Any Pochaco',any:'Any moving object',grumbox:'Grumbox',knight:'Sir Tipsy',jelly:'Boingo',cloud:'Nimbus',eater:'Scribble Eater',clock:'Tick-Tock',snail:'Turbo Snail',robot:'Magneto',king:'The Chaos King',dragon:'The Crayon Dragon',tube:'Dispenser',hen:'Hen',cannon:'Repeating cannon'};
-  let level, selected = -1, tool = 'select', history = [], future = [], sim, drag = null, noteTimer, draftTimer, capture = null, libraryObserver, homeTab = 'studio';
+  let level, selected = [], tool = 'select', history = [], future = [], sim, drag = null, noteTimer, draftTimer, capture = null, libraryObserver, homeTab = 'studio';
+  const selectionMenu = $('#selectionMenu');
   let sketchbook = Kit.read('library', []);
   let pendingDelete = null;
   if (!Array.isArray(sketchbook)) sketchbook = [];
@@ -43,7 +44,7 @@
       catch (e) { notify('A cloud puzzle could not be opened.'); }
     }
   });
-  const snapshot = () => ({ level: Kit.clone(level), selected });
+  const snapshot = () => ({ level: Kit.clone(level), selected: selected.slice() });
   const notify = message => { $('#notification').textContent = message; $('#notification').hidden = false; clearTimeout(noteTimer); noteTimer = setTimeout(() => $('#notification').hidden = true, 3800); };
   function saveDraft() {
     clearTimeout(draftTimer);
@@ -55,11 +56,12 @@
   function forgetCurrentLevel(id) {
     if (level?.id !== id) return;
     clearTimeout(draftTimer);
-    level = Kit.blank(); selected = -1; history = []; future = []; refresh();
+    level = Kit.blank(); selected = []; history = []; future = []; refresh();
     if (!$('#editorPanel').hidden) showTab('studio', true, false);
   }
   function remember(before) { history.push(before); if (history.length > 70) history.shift(); future = []; }
   function change(fn, keepHint) {
+    closeSelectionMenu();
     const before = snapshot();
     try {
       fn();
@@ -68,12 +70,13 @@
     } catch (e) { level = before.level; selected = before.selected; refresh(); notify(e.message); }
   }
   function undo(redo) {
+    closeSelectionMenu();
     const from = redo ? future : history, to = redo ? history : future;
     if (!from.length) return;
     to.push(snapshot()); const previous = from.pop(); level = previous.level; selected = previous.selected; refresh(); saveDraft();
   }
   function setLevel(next) {
-    level = Kit.validate(next); selected = -1; history = []; future = []; setTool('select'); showProperties('object'); refresh(); saveDraft();
+    level = Kit.validate(next); selected = []; history = []; future = []; setTool('select'); showProperties('object'); refresh(); saveDraft();
   }
   function writeLibrary() {
     try { Kit.write('library', sketchbook); $('#savedCount').textContent = sketchbook.length; return true; }
@@ -100,12 +103,13 @@
     return true;
   }
   function setTool(next) {
+    closeSelectionMenu();
     tool = next;
     $('#selectTool').setAttribute('aria-pressed', String(next === 'select'));
     document.querySelectorAll('.toy').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.toy === next)));
     cv.style.cursor = next === 'select' ? 'default' : 'crosshair';
   }
-  function drawTo(canvas, lv, selectedIndex = -1, hint = false) {
+  function drawTo(canvas, lv, selection = [], hint = false) {
     const c = canvas.getContext('2d'), sketch = canvas === cv ? cr : new Crayon(c), scale = canvas.width / 1600;
     sketch.res = scale; sketch.boil = 0;
     const world = canvas === cv ? sim : new Sim(lv, []);
@@ -115,14 +119,21 @@
     for (const p of world.parts) { const r = Draw.R[p.type]; if (r && r.stat) r.stat(g, p, world); }
     for (const p of world.parts) { const r = Draw.R[p.type]; if (r && r.live) r.live(g, p, world); }
     if (hint && lv.solution.length) Draw.ghost(g, lv.solution, .6);
-    if (selectedIndex >= 0 && lv.parts[selectedIndex]) {
+    for (const selectedIndex of selection) {
+      if (!lv.parts[selectedIndex]) continue;
       const p = lv.parts[selectedIndex], box = Kit.bounds(p), pad = .12;
       c.save(); c.strokeStyle = '#3565b3'; c.lineWidth = 2.5; c.setLineDash([8,6]);
       c.fillStyle = '#3565b311'; c.fillRect((box[0]-pad)*100,(box[1]-pad)*100,(box[2]-box[0]+pad*2)*100,(box[3]-box[1]+pad*2)*100);
       c.strokeRect((box[0]-pad)*100,(box[1]-pad)*100,(box[2]-box[0]+pad*2)*100,(box[3]-box[1]+pad*2)*100); c.setLineDash([]);
       const handles = p.x1 != null && p.x2 != null && p.y1 != null && p.y2 != null ? [[p.x1,p.y1],[p.x2,p.y2]] : [[box[0],box[1]],[box[2],box[3]]];
-      for (const [x,y] of handles) { c.fillStyle = '#fffdf7'; c.fillRect(x*100-6,y*100-6,12,12); c.strokeRect(x*100-6,y*100-6,12,12); }
+      if (selection.length === 1) for (const [x,y] of handles) { c.fillStyle = '#fffdf7'; c.fillRect(x*100-6,y*100-6,12,12); c.strokeRect(x*100-6,y*100-6,12,12); }
       c.restore();
+    }
+    if (canvas === cv && drag?.kind === 'box' && drag.moved) {
+      const x = Math.min(drag.q[0], drag.end[0]) * 100, y = Math.min(drag.q[1], drag.end[1]) * 100;
+      const w = Math.abs(drag.end[0] - drag.q[0]) * 100, h = Math.abs(drag.end[1] - drag.q[1]) * 100;
+      c.save(); c.fillStyle = '#3565b31c'; c.strokeStyle = '#3565b3'; c.lineWidth = 2; c.setLineDash([8, 5]);
+      c.fillRect(x, y, w, h); c.strokeRect(x, y, w, h); c.restore();
     }
   }
   function render() { drawTo(cv, level, selected, $('#showHint').checked); }
@@ -206,7 +217,7 @@
     }
     input.dataset.field=key;
     input.addEventListener('change', () => change(() => {
-      const object=level.parts[selected]; let next;
+      const object=level.parts[selected[0]]; let next;
       if (input.type==='checkbox') next=input.checked;
       else if (input.type==='number') {
         next=input.value==='' ? undefined : Number(input.value);
@@ -238,28 +249,47 @@
   });
   function inspector() {
     const box = $('#objectInspector'); box.replaceChildren();
-    const p=level.parts[selected];
+    const p=level.parts[selected[0]];
     if(!p) { const empty=document.createElement('div'); empty.className='empty-inspector'; empty.innerHTML='<span aria-hidden="true">↖</span><strong>Pick something on the paper.</strong><p>Move it, give it a little nudge, or make it your own.</p>'; box.append(empty); return; }
     const heading=document.createElement('div'); heading.className='selected-heading';
+    if (selected.length > 1) {
+      const name = document.createElement('strong'); name.textContent = selected.length + ' objects selected'; heading.append(name); box.append(heading);
+      selectionActions(box); return;
+    }
     const name=document.createElement('strong'); name.textContent=(toys.find(t=>t[0] === (p.type==='dispenser' ? p.kind==='hen' ? 'hen' : p.kind==='cannon' ? 'repeater' : 'dispenser' : p.type==='deco' ? p.kind : p.type))||['',p.type])[1];
-    const number=document.createElement('span'); number.textContent='OBJECT '+String(selected+1).padStart(2,'0'); heading.append(name,number); box.append(heading);
+    const number=document.createElement('span'); number.textContent='OBJECT '+String(selected[0]+1).padStart(2,'0'); heading.append(name,number); box.append(heading);
     const dispenserFields = p.kind==='hen' ? ['x1','x2','y','speed'] : ['x','y',...(p.kind==='cannon' ? ['angle','speed'] : ['xs'])];
     const list=((p.type==='dispenser' ? ['kind',...dispenserFields,'style','count','every','first','when'] : fields[p.type]) || Object.keys(p).filter(k=>!['type'].includes(k)&&['string','number','boolean'].includes(typeof p[k]))).slice();
     if (p.move) list.push(...['move.dx','move.dy','move.period','move.phase'].filter(key=>!list.includes(key)));
     const signals=$('#triggerSignals');signals.replaceChildren();for(const signal of new Set(['start','signal1',...level.parts.flatMap(item=>[item.when,...[].concat(item.fires||[])])].filter(Boolean))){const option=document.createElement('option');option.value=signal;signals.append(option);}
     let row;
     for(const key of list) { if(!row||row.children.length===2) { row=document.createElement('div'); row.className='field-row'; box.append(row); } row.append(makeField(p,key)); }
+    selectionActions(box);
+  }
+  function selectionActions(box) {
     const acts=document.createElement('div'); acts.className='object-actions';
     const duplicate=document.createElement('button'); duplicate.className='button'; duplicate.textContent='Duplicate'; duplicate.onclick=duplicateSelected;
-    const remove=document.createElement('button'); remove.className='button danger'; remove.textContent='Remove'; remove.onclick=removeSelected; acts.append(duplicate,remove); box.append(acts);
+    const remove=document.createElement('button'); remove.className='button danger'; remove.textContent='Delete'; remove.onclick=removeSelected; acts.append(duplicate,remove); box.append(acts);
   }
-  function removeSelected() { if(selected>=0) change(()=>{level.parts.splice(selected,1);selected=-1;}); }
+  function removeSelected() {
+    if (!selected.length) return;
+    change(() => { for (const i of selected.slice().sort((a,b) => b-a)) level.parts.splice(i,1); selected=[]; });
+  }
   function duplicateSelected() {
-    if(selected<0) return;
-    change(()=>{const p=Kit.clone(level.parts[selected]); Kit.move(p,.4,-.4); if(p.id) p.id+='-copy'; level.parts.push(p); selected=level.parts.length-1;});
+    if (!selected.length) return;
+    change(() => {
+      if (level.parts.length + selected.length > 120) throw new Error('A puzzle can have up to 120 objects.');
+      const ids = new Set(level.parts.map(p=>p.id)), copies=[];
+      for (const i of selected) {
+        const p=Kit.clone(level.parts[i]); Kit.move(p,.4,-.4);
+        if (p.id) { const base=p.id+'-copy'; let id=base,n=2; while(ids.has(id)) id=base+'-'+n++; p.id=id; ids.add(id); }
+        copies.push(level.parts.length); level.parts.push(p);
+      }
+      selected=copies;
+    });
   }
   const snap=n=>$('#snapGrid').checked ? Math.round(n*5)/5 : Math.round(n*1000)/1000;
-  function point(ev) { const r=cv.getBoundingClientRect(); return [snap(Math.max(0,Math.min(16,(ev.clientX-r.left)/r.width*16))),snap(Math.max(0,Math.min(8.6,(ev.clientY-r.top)/r.height*9)))]; }
+  function point(ev, snapped = true) { const r=cv.getBoundingClientRect(); const q=[Math.max(0,Math.min(16,(ev.clientX-r.left)/r.width*16)),Math.max(0,Math.min(9,(ev.clientY-r.top)/r.height*9))]; return snapped ? [snap(q[0]),snap(Math.min(8.6,q[1]))] : q; }
   function hit(q) {
     for(let i=level.parts.length-1;i>=0;i--) {
       const p=level.parts[i],b=Kit.bounds(p);
@@ -268,55 +298,108 @@
     } return -1;
   }
   cv.addEventListener('pointerdown',ev=>{
-    if(ev.button>0) return; ev.preventDefault(); cv.focus({preventScroll:true}); try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* Pointer may already have been released. */ }
-    const q=point(ev), before=snapshot();
+    if(ev.button>0) return; ev.preventDefault(); closeSelectionMenu(); cv.focus({preventScroll:true}); try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* Pointer may already have been released. */ }
+    const q=point(ev), raw=point(ev,false), before=snapshot();
     showProperties('object');
     if(tool!=='select') {
       if(level.parts.length>=120) {notify('A puzzle can have up to 120 objects.');return;}
       const def=toys.find(t=>t[0]===tool)[3](q);
-      level.parts.push(def); selected=level.parts.length-1;
+      level.parts.push(def); selected=[level.parts.length-1];
       if(tool==='plank') { def.x1=q[0];def.y1=q[1];def.x2=q[0]+.2;def.y2=q[1];drag={kind:'create',q,before}; }
-      else { level=before.level;change(()=>{level.parts.push(def);selected=level.parts.length-1;});setTool('select'); }
+      else { level=before.level;selected=before.selected;change(()=>{level.parts.push(def);selected=[level.parts.length-1];});setTool('select'); }
       sim=new Sim(level,[]);render();inspector();return;
     }
     let handle;
-    const p=level.parts[selected];
-    if(p&&p.x1!=null&&p.y1!=null&&p.x2!=null&&p.y2!=null) {
-      if(Math.hypot(q[0]-p.x1,q[1]-p.y1)<.25) handle=1;
-      else if(Math.hypot(q[0]-p.x2,q[1]-p.y2)<.25) handle=2;
+    const p=level.parts[selected[0]];
+    if(!ev.shiftKey&&selected.length===1&&p&&p.x1!=null&&p.y1!=null&&p.x2!=null&&p.y2!=null) {
+      if(Math.hypot(raw[0]-p.x1,raw[1]-p.y1)<.25) handle=1;
+      else if(Math.hypot(raw[0]-p.x2,raw[1]-p.y2)<.25) handle=2;
     }
-    if(!handle) selected=hit(q);
-    if(selected>=0) drag={kind:handle?'handle':'move',handle,q,before,original:Kit.clone(level.parts[selected])};
+    const index=handle ? selected[0] : hit(raw);
+    if (index >= 0) {
+      if (ev.shiftKey) selected=selected.includes(index) ? selected.filter(i=>i!==index) : [...selected,index].sort((a,b)=>a-b);
+      else {
+        if (!selected.includes(index)) selected=[index];
+        drag={kind:handle?'handle':'move',handle,q,before,originals:selected.map(i=>[i,Kit.clone(level.parts[i])])};
+      }
+    } else {
+      const base=ev.shiftKey ? selected.slice() : [];
+      selected=base.slice(); drag={kind:'box',q:raw,end:raw,base,before,start:[ev.clientX,ev.clientY],moved:false};
+    }
     render();inspector();
   });
   cv.addEventListener('pointermove',ev=>{
     const q=point(ev); $('#coordinates').textContent='x '+q[0].toFixed(1)+'  /  y '+q[1].toFixed(1);
     if(!drag) return;
-    const p=level.parts[selected];
+    if (drag.kind==='box') {
+      drag.end=point(ev,false); drag.moved ||= Math.hypot(ev.clientX-drag.start[0],ev.clientY-drag.start[1])>4;
+      if (drag.moved) {
+        const x1=Math.min(drag.q[0],drag.end[0]),x2=Math.max(drag.q[0],drag.end[0]),y1=Math.min(drag.q[1],drag.end[1]),y2=Math.max(drag.q[1],drag.end[1]);
+        const inside=level.parts.flatMap((p,i)=>{const b=Kit.bounds(p);return b[0]<=x2&&b[2]>=x1&&b[1]<=y2&&b[3]>=y1 ? [i] : [];});
+        selected=[...new Set([...drag.base,...inside])].sort((a,b)=>a-b);
+      }
+      render(); return;
+    }
+    const p=level.parts[selected[0]];
     if(drag.kind==='create') {p.x2=q[0];p.y2=q[1];if(Math.hypot(p.x2-p.x1,p.y2-p.y1)<.12)p.x2=p.x1+.2;}
     else if(drag.kind==='handle') {p['x'+drag.handle]=q[0];p['y'+drag.handle]=q[1];if(Math.hypot(p.x2-p.x1,p.y2-p.y1)<.12){p.x2=p.x1+.2;p.y2=p.y1;}}
-    else {level.parts[selected]=Kit.clone(drag.original);Kit.move(level.parts[selected],q[0]-drag.q[0],q[1]-drag.q[1]);}
+    else for (const [i,original] of drag.originals) {level.parts[i]=Kit.clone(original);Kit.move(level.parts[i],q[0]-drag.q[0],q[1]-drag.q[1]);}
     sim=new Sim(level,[]);render();
   });
   function finishDrag(cancelled) {
-    if(!drag)return; const before=drag.before;drag=null;
+    if(!drag)return; const before=drag.before,kind=drag.kind;drag=null;
     if(cancelled){level=before.level;selected=before.selected;refresh();return;}
+    if(kind==='box'){render();inspector();return;}
     if(JSON.stringify(level)!==JSON.stringify(before.level)) {
       try { level.solution=[];delete level.hintVerified;level=Kit.validate(level);remember(before);refresh();saveDraft();setTool('select'); }
       catch(e){level=before.level;selected=before.selected;refresh();notify(e.message);}
-    } else inspector();
+    } else {render();inspector();}
   }
   cv.addEventListener('pointerup',()=>finishDrag(false));cv.addEventListener('pointercancel',()=>finishDrag(true));
+  cv.addEventListener('lostpointercapture',()=>finishDrag(false));
+  function closeSelectionMenu(restoreFocus = false) {
+    const wasOpen=!selectionMenu.hidden; selectionMenu.hidden=true;
+    if (wasOpen&&restoreFocus) cv.focus({preventScroll:true});
+  }
+  cv.addEventListener('contextmenu',ev=>{
+    ev.preventDefault(); finishDrag(true); setTool('select');
+    const index=hit(point(ev,false));
+    if(index>=0&&!selected.includes(index)) selected=[index];
+    render();showProperties('object');inspector();
+    if(!selected.length)return;
+    $('#selectionCount').textContent=selected.length===1 ? '1 object selected' : selected.length+' objects selected';
+    selectionMenu.hidden=false;
+    const r=selectionMenu.getBoundingClientRect(),margin=8;
+    selectionMenu.style.left=Math.max(margin,Math.min(ev.clientX,window.innerWidth-r.width-margin))+'px';
+    selectionMenu.style.top=Math.max(margin,Math.min(ev.clientY,window.innerHeight-r.height-margin))+'px';
+    selectionMenu.querySelector('[role="menuitem"]').focus({preventScroll:true});
+  });
+  $('#duplicateSelection').onclick=()=>{closeSelectionMenu(true);duplicateSelected();};
+  $('#deleteSelection').onclick=()=>{closeSelectionMenu(true);removeSelected();};
+  selectionMenu.addEventListener('keydown',ev=>{
+    const items=Array.from(selectionMenu.querySelectorAll('[role="menuitem"]'));
+    if(['ArrowUp','ArrowDown','Home','End'].includes(ev.key)) {
+      ev.preventDefault();ev.stopPropagation();
+      const index=items.indexOf(document.activeElement);
+      items[ev.key==='Home'?0:ev.key==='End'?items.length-1:(index+(ev.key==='ArrowDown'?1:-1)+items.length)%items.length].focus();
+    } else if(ev.key==='Escape'||ev.key==='Tab') {ev.preventDefault();ev.stopPropagation();closeSelectionMenu(true);}
+  });
+  document.addEventListener('pointerdown',ev=>{if(!selectionMenu.contains(ev.target))closeSelectionMenu();});
+  document.addEventListener('focusin',ev=>{if(!selectionMenu.contains(ev.target))closeSelectionMenu();});
+  window.addEventListener('resize',()=>closeSelectionMenu());
+  window.addEventListener('scroll',()=>closeSelectionMenu(),true);
   window.addEventListener('keydown',ev=>{
     if(ev.defaultPrevented || $('#studioPanel').hidden || $('#editorPanel').hidden || ev.target.closest('input,textarea,select') || document.querySelector('dialog[open]'))return;
     const mod=ev.ctrlKey||ev.metaKey,key=ev.key.toLowerCase();
+    if (!selectionMenu.hidden) return;
+    if (drag) { if (key==='escape') {ev.preventDefault();finishDrag(true);} return; }
     if(mod&&key==='z'){ev.preventDefault();undo(ev.shiftKey);}
     else if(mod&&key==='y'){ev.preventDefault();undo(true);}
     else if(mod&&key==='d'){ev.preventDefault();duplicateSelected();}
     else if(mod&&key==='s'){ev.preventDefault();saveToLibrary();}
-    else if(key==='v'||key==='escape'){setTool('select');selected=-1;render();inspector();}
-    else if((key==='delete'||key==='backspace')&&selected>=0){ev.preventDefault();removeSelected();}
-    else if(selected>=0&&['arrowleft','arrowright','arrowup','arrowdown'].includes(key)){ev.preventDefault();const n=ev.shiftKey?.5:.1;change(()=>Kit.move(level.parts[selected],key==='arrowleft'?-n:key==='arrowright'?n:0,key==='arrowup'?-n:key==='arrowdown'?n:0));}
+    else if(key==='v'||key==='escape'){setTool('select');selected=[];render();inspector();}
+    else if((key==='delete'||key==='backspace')&&selected.length){ev.preventDefault();removeSelected();}
+    else if(selected.length&&['arrowleft','arrowright','arrowup','arrowdown'].includes(key)){ev.preventDefault();const n=ev.shiftKey?.5:.1;change(()=>{for(const i of selected)Kit.move(level.parts[i],key==='arrowleft'?-n:key==='arrowright'?n:0,key==='arrowup'?-n:key==='arrowdown'?n:0);});}
   });
   for(const [id,name,icon] of toys) {
     const b=document.createElement('button');b.className='toy';b.dataset.toy=id;b.setAttribute('aria-pressed','false');b.setAttribute('aria-label','Place '+name);
@@ -403,6 +486,7 @@
     window.history.replaceState(null, '', url);
   }
   function showTab(name, updateUrl = true, preserve = true) {
+    closeSelectionMenu();
     if (preserve && !$('#editorPanel').hidden && !preserveDraft()) return;
     const levels = name === 'levels';
     $('#levelsPanel').hidden = !levels; $('#studioPanel').hidden = levels;

@@ -45,7 +45,7 @@
     </aside>
     <section class="stage-column" aria-label="Level canvas">
       <div class="canvas-toolbar"><div><button class="icon-button" id="undoEdit" title="Undo (Ctrl/Cmd Z)" aria-label="Undo">↶</button><button class="icon-button" id="redoEdit" title="Redo (Ctrl/Cmd Shift Z)" aria-label="Redo">↷</button><span class="toolbar-rule"></span><label class="toggle"><input type="checkbox" id="snapGrid" checked> Snap to grid</label></div><label class="toggle"><input type="checkbox" id="showHint"> Show hint</label></div>
-      <div class="canvas-paper"><canvas id="editorCanvas" width="1600" height="900" tabindex="0" aria-label="Level editor canvas. Select objects to move them. Arrow keys nudge, Delete removes, Ctrl or Command D duplicates."></canvas><span class="canvas-coordinates" id="coordinates">16 × 9 playground</span></div>
+      <div class="canvas-paper"><canvas id="editorCanvas" width="1600" height="900" tabindex="0" aria-label="Level editor canvas. Drag on empty paper to box-select objects. Shift-click adds or removes objects. Right-click for Duplicate and Delete. Arrow keys nudge, Delete removes, Ctrl or Command D duplicates."></canvas><span class="canvas-coordinates" id="coordinates">16 × 9 playground</span></div>
     </section>
     <aside class="inspector panel" aria-label="Properties">
       <div class="panel-heading"><h2>Properties</h2><span>02</span></div>
@@ -73,6 +73,11 @@
   </section>
 </div>
 <div id="notification" class="notification" role="status" aria-live="polite" hidden></div>
+<div id="selectionMenu" class="selection-menu" role="menu" aria-label="Selected objects" hidden>
+  <div id="selectionCount" class="selection-count" aria-hidden="true"></div>
+  <button id="duplicateSelection" role="menuitem" tabindex="-1">Duplicate</button>
+  <button id="deleteSelection" class="danger" role="menuitem" tabindex="-1">Delete</button>
+</div>
 <dialog id="createDialog" class="modal create-modal" aria-labelledby="createTitle">
   <div class="modal-heading"><h2 id="createTitle">New level</h2><button class="icon-button" data-close aria-label="Close new level options">×</button></div>
   <div class="create-options">
