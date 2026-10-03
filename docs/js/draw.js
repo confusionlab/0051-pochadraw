@@ -12,6 +12,11 @@
     pochaco.onerror = () => resolve(false);
   }) };
   pochaco.src = new URL('../assets/pochaco.png', document.currentScript.src).href;
+  const otter = new Image();
+  CC.OtterNuke = { image:otter, ready:new Promise(resolve=>{
+    otter.onload=()=>resolve(true);otter.onerror=()=>resolve(false);
+  }) };
+  otter.src = new URL('../assets/otter-nuke.png',document.currentScript.src).href;
   const S = 100;
   const FLOOR = CC.K.FLOOR_Y * S;
   const SKETCH = '"Cabin Sketch", "Patrick Hand", cursive';
@@ -409,6 +414,45 @@
           }
         }
       }
+    }
+  };
+
+  R.otterNuke = {
+    live(g,p,sim) {
+      const x=p.def.x*S,y=p.def.y*S,r=p.r*S,c=g.ctx,cr=g.cr;
+      if(!p.st.exploded) {
+        if(otter.complete&&otter.naturalWidth) {
+          const h=r*2*otter.naturalHeight/otter.naturalWidth;
+          c.drawImage(otter,x-r,y-h/2,r*2,h);
+        } else {
+          cr.shape(shapes.circle(x,y,r),{fill:PAL.tan,stroke:PAL.graphite,w:3,seed:6});
+          cr.shape(shapes.ellipse(x,y+r*.25,r*.65,r*.55),{fill:PAL.paper,stroke:PAL.graphite,w:2,seed:3});
+          for(const dx of [-.3,.3])dot(g,x+dx*r,y+r*.2,r*.13,PAL.black);
+          cr.shape(shapes.ellipse(x,y+r*.45,r*.13,r*.08),{fill:PAL.black,seed:7});
+        }
+        return;
+      }
+      const age=sim.t-p.st.explodeT,duration=1.1;
+      if(age>=duration)return;
+      const t=clamp01(age/duration),wave=r+260*Math.sqrt(t),fade=1-t;
+      c.save();c.globalAlpha*=fade;
+      // A hand-drawn flash, expanding shockwave, outward sparks and smoke.
+      if(t<.5) {
+        const burst=[],size=r*(.7+5*t);
+        for(let i=0;i<24;i++) {const a=i/24*Math.PI*2,k=i%2?.48:1;burst.push([x+Math.cos(a)*size*k,y+Math.sin(a)*size*k]);}
+        cr.shape(burst,{fill:PAL.orange,stroke:PAL.darkred,w:3,seed:12});
+        cr.shape(shapes.circle(x,y,size*.42),{fill:PAL.yellow,stroke:PAL.gold,w:2,seed:4});
+      }
+      cr.line(shapes.circle(x,y,wave,48),{color:PAL.orange,w:5*(1-t)+1,closed:true,seed:9});
+      for(let i=0;i<16;i++) {
+        const a=i/16*Math.PI*2+.11,inner=wave*.72,outer=wave+20*(1-t);
+        cr.line([[x+Math.cos(a)*inner,y+Math.sin(a)*inner],[x+Math.cos(a)*outer,y+Math.sin(a)*outer]],{color:i%2?PAL.gold:PAL.red,w:4*(1-t)+1,seed:i});
+      }
+      if(t>.12)for(let i=0;i<7;i++) {
+        const a=i/7*Math.PI*2,travel=r+100*t;
+        cr.shape(shapes.circle(x+Math.cos(a)*travel,y+Math.sin(a)*travel-35*t,12+22*t,16),{fill:PAL.gray,fillAlpha:.35,stroke:PAL.gray,w:1.5,seed:i+20});
+      }
+      c.restore();
     }
   };
 

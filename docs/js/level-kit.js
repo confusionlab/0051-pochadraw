@@ -28,7 +28,7 @@
       for (const k of ['x', 'y', 'x1', 'y1', 'x2', 'y2', 'baseY', 'angle']) {
         if (p[k] != null && (typeof p[k] !== 'number' || Math.abs(p[k]) > (k === 'angle' ? 360 : 100))) throw new Error('Object positions must be numbers within the canvas range.');
       }
-      const required = ['plank','gate'].includes(p.type) ? ['x1','y1','x2','y2'] : ['block','crate','lava','nodraw'].includes(p.type) ? ['x','y','w','h'] : ['ball','cup','bell','balloon','fan','seesaw','pusher','car','cannon','trampoline','star','lamp','flag','deco','cat','note','boss'].includes(p.type) ? ['x','y'] : [];
+      const required = ['plank','gate'].includes(p.type) ? ['x1','y1','x2','y2'] : ['block','crate','lava','nodraw'].includes(p.type) ? ['x','y','w','h'] : ['ball','cup','bell','balloon','fan','seesaw','pusher','car','cannon','trampoline','star','lamp','flag','deco','cat','note','boss','otterNuke'].includes(p.type) ? ['x','y'] : [];
       if (p.type === 'conveyor') required.push('x1','x2','y');
       if (p.type === 'dispenser') required.push('y',...(p.kind === 'hen' ? ['x1','x2'] : ['x']));
       if (p.type === 'boss') required.push('w','h');
@@ -44,6 +44,7 @@
       if (p.xs != null && (!Array.isArray(p.xs) || !p.xs.length || p.xs.some(x=>typeof x!=='number'||!Number.isFinite(x)||Math.abs(x)>100))) throw new Error('Drop offsets must be comma-separated numbers.');
       if (p.hp != null && (!Number.isInteger(p.hp) || p.hp < 1 || p.hp > 100)) throw new Error('Hit points must be a whole number between 1 and 100.');
       if (p.every != null && (typeof p.every !== 'number' || p.every <= 0)) throw new Error('Release interval must be positive.');
+      if (p.type === 'otterNuke' && p.force != null && (typeof p.force !== 'number' || p.force < 0 || p.force > 100)) throw new Error('Explosion force must be between 0 and 100.');
       if (p.move && (p.move.period != null && p.move.period <= 0)) throw new Error('Travel time must be positive.');
       if (p.type === 'ball' && p.style && !Object.hasOwn(CC.BALLS, p.style)) throw new Error('Unknown ball material.');
       if (p.n != null && (!Number.isInteger(p.n) || p.n < 1 || p.n > 100)) throw new Error('Object counts must be between 1 and 100.');
@@ -94,6 +95,7 @@
     if (p.pts && p.pts.length) return [Math.min(...p.pts.map(q => q[0])), Math.min(...p.pts.map(q => q[1])), Math.max(...p.pts.map(q => q[0])), Math.max(...p.pts.map(q => q[1]))];
     const x = p.x || 0, y = p.y || 0;
     if (p.type === 'ball') { const r = p.r || (CC.BALLS[p.style || 'rubber'] || {}).r || 0.24; return [x - r, y - r, x + r, y + r]; }
+    if (p.type === 'otterNuke') { const r=p.r||.55; return [x-r,y-r,x+r,y+r]; }
     if (['block', 'nodraw', 'lava'].includes(p.type)) return [x, y, x + (p.w || 1), y + (p.h || 1)];
     if (p.type === 'cup') return [x - (p.w || 1.3) / 2, y - Math.max(p.h || 0.8, p.backH || 0), x + (p.w || 1.3) / 2, y];
     if (p.type === 'dominoes') return [x - 0.15, y - (p.h || 0.8), x + ((p.n || 1) - 1) * (p.gap || 0.45) + 0.15, y];

@@ -1,7 +1,7 @@
 /* Pochadraw — the visual contraption studio. */
 (async function () {
   'use strict';
-  await Promise.all([window.CC.Cloud?.ready, window.CC.Pochaco.ready]);
+  await Promise.all([window.CC.Cloud?.ready, window.CC.Pochaco.ready, window.CC.OtterNuke.ready]);
   const { Sim, Draw, Crayon, LEVELS, WORLDS, geom, LevelKit: Kit } = window.CC;
   const $ = s => document.querySelector(s);
   const cv = $('#editorCanvas'), ctx = cv.getContext('2d'), cr = new Crayon(ctx);
@@ -9,6 +9,7 @@
   const NAMES = ['Blue · fixed', 'Orange · falls', 'Green · bouncy', 'Yellow · floats', 'Purple · hinged', 'Red · booster', 'Black · magnetic'];
   const toys = CC.EditorTools;
   const fields = {
+    otterNuke: ['x','y','r','force'],
     ball: ['x','y','r','style','hold','metal'], plank: ['x1','y1','x2','y2','t','style','friction'], gate: ['x1','y1','x2','y2','t','style','when'],
     cup: ['x','y','w','h','style','accept','back','backH','moving'], block: ['x','y','w','h','style','text'], bell: ['x','y','size','hang','goal'],
     dominoes: ['x','y','n','gap','h'], seesaw: ['x','y','len','t','angle','baseY','limit.0','limit.1','lips'], pusher: ['x','y','dir','reach','speed','when'],
@@ -21,7 +22,7 @@
   };
   const labels = { x:'X position', y:'Y position', x1:'Start X', y1:'Start Y', x2:'End X', y2:'End Y', startX:'Start X',startY:'Start Y',endX:'End X',endY:'End Y', r:'Radius', w:'Width', h:'Height', t:'Thickness', len:'Length', n:'Count', count:'Count', baseY:'Base Y', bounce:'Bounciness', angle:'Angle (degrees)', rot:'Text angle (degrees)', gap:'Spacing', style:'Material', 'ball.style':'Pochaco material', hold:'Release', when:'Trigger', back:'Tall side', backH:'Side height', on:'Always on', text:'Text', size:'Size', fires:'Activates', dir:'Direction', power:'Power', speed:'Speed', reach:'Reach', width:'Air width', goal:'Puzzle goal', look:'Appearance', hp:'Hit points',minHit:'Minimum hit speed',hitBy:'Hit by',eats:'Eats drawings',kind:'Kind',s:'Scale',every:'Seconds between releases',first:'First release (seconds)',run:'Run time (seconds)',metal:'Magnetic',density:'Weight',flip:'Flip',hang:'Hanging',accept:'Accepts',moving:'Moving','move.dx':'Horizontal travel','move.dy':'Vertical travel','move.period':'Travel time (seconds)','move.phase':'Starting phase','tie.0':'Tie X','tie.1':'Tie Y','limit.0':'Minimum angle (degrees)','limit.1':'Maximum angle (degrees)',allow:'Allowed crayons',friction:'Friction',torque:'Motor strength' };
   const materials = Object.keys(CC.BALLS);
-  Object.assign(labels, {lips:'Side stops',xs:'Drop offsets'});
+  Object.assign(labels, {lips:'Side stops',xs:'Drop offsets',force:'Explosion force'});
   const appearances = ['grumbox','knight','jelly','cloud','eater','clock','snail','robot','king','dragon'];
   const names = {rubber:'Standard',tennis:'Bouncy',marble:'Marble',bowling:'Heavy',beach:'Light',steel:'Steel',egg:'Fragile',meatball:'Soft',ball:'Any Pochaco',any:'Any moving object',grumbox:'Grumbox',knight:'Sir Tipsy',jelly:'Boingo',cloud:'Nimbus',eater:'Scribble Eater',clock:'Tick-Tock',snail:'Turbo Snail',robot:'Magneto',king:'The Chaos King',dragon:'The Crayon Dragon',tube:'Dispenser',hen:'Hen',cannon:'Repeating cannon'};
   let level, selected = [], tool = 'select', history = [], future = [], sim, drag = null, noteTimer, draftTimer, capture = null, libraryObserver, homeTab = 'studio';
@@ -209,6 +210,7 @@
       if (typeof value === 'boolean' || ['on','metal','goal','eats','flip','hang','moving'].includes(key)) { input.type='checkbox'; input.checked=key==='goal' ? value!==false : !!value; }
       else if (!['text','name','fires','when','hold','allow','xs'].includes(key)) {
         input.type='number'; input.step=['n','count','hp'].includes(key) ? '1' : '0.1';
+        if (p.type==='otterNuke'&&key==='force') {input.min='0';input.max='100';input.step='1';value ??= 14;}
         if (value == null && key==='r' && p.type==='ball') value=CC.BALLS[p.style||'rubber'].r;
         input.value=value==null ? '' : angleField(p,key) ? Math.round(value*180/Math.PI*10)/10 : value;
       } else { input.type='text'; input.maxLength=key==='text' ? 300 : 80; input.value=Array.isArray(value) ? value.join(', ') : value || ''; }
@@ -403,7 +405,7 @@
   });
   for(const [id,name,icon] of toys) {
     const b=document.createElement('button');b.className='toy';b.dataset.toy=id;b.setAttribute('aria-pressed','false');b.setAttribute('aria-label','Place '+name);
-    b.innerHTML=(id === 'ball' ? '<img src="assets/pochaco.png" alt="">' : '<svg viewBox="0 0 40 34" aria-hidden="true" fill="none" stroke="#675b43" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+icon+'</svg>')+'<span>'+name+'</span>';
+    b.innerHTML=(id === 'ball' || id === 'otterNuke' ? '<img src="assets/'+(id==='ball'?'pochaco':'otter-nuke')+'.png" alt="">' : '<svg viewBox="0 0 40 34" aria-hidden="true" fill="none" stroke="#675b43" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+icon+'</svg>')+'<span>'+name+'</span>';
     b.onclick=()=>setTool(id);$('#palette').append(b);
   }
   Kit.crayons.forEach((kind,i)=>{

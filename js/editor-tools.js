@@ -4,6 +4,7 @@
   const CC = root.CC || (root.CC = {});
   const tools = [
     ['ball', 'Pochaco', '', p => ({ type: 'ball', x: p[0], y: p[1], style: 'rubber', hold: 'start' })],
+    ['otterNuke', 'Otter Nuke', '', p => ({ type:'otterNuke',x:p[0],y:p[1],r:.55,force:14 })],
     ['plank', 'Platform', '<path d="m4 22 31-10 2 6L6 27Z" fill="#c2986b"/><path d="m8 23 24-8"/>', p => ({ type: 'plank', x1: p[0]-1.5, y1: p[1], x2: p[0]+1.5, y2: p[1], t: 0.2 })],
     ['cup', 'Basket', '<path d="m7 11 3 16h21l3-16Z" fill="#d9b87c"/><path d="M8 15h25M10 22h22m-17-9 1 14m7-14v14m6-14-1 14"/>', p => ({ type: 'cup', x: p[0], y: p[1], w: 1.8, h: 1.1, style: 'basket' })],
     ['block', 'Block', '<path d="M7 7h26v22H7Z" fill="#d6ae7c"/><path d="m7 7 7 6h19M14 13v16"/>', p => ({ type: 'block', x: p[0]-.8, y: p[1]-.6, w: 1.6, h: 1.2, style: 'box' })],

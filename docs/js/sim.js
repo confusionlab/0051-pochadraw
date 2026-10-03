@@ -687,6 +687,55 @@
     }
   };
 
+  function detonateOtter(sim, p) {
+    if (!sim.running || p.st.exploded) return;
+    p.st.exploded = true; p.st.gone = true; p.st.explodeT = sim.t;
+    const d = p.def, force = d.force ?? 14, body = p.bodies[0];
+    sim.emit('explosion', { x: d.x, y: d.y, force });
+    sim.later(() => {
+      sim.world.destroyBody(body); p.bodies.length = 0;
+      // A mass-scaled impulse gives every movable body a controlled outward kick.
+      for (let b = sim.world.getBodyList(); b; b = b.getNext()) {
+        if (!b.isDynamic() || !b.isActive() || b.__gone) continue;
+        const q = b.getWorldCenter(), dx = q.x-d.x, dy = q.y-d.y, distance = Math.hypot(dx,dy);
+        const strength = force / (1 + distance/2) * b.getMass();
+        const nx = distance > .001 ? dx/distance : 0, ny = distance > .001 ? dy/distance : -1;
+        b.applyLinearImpulse(Vec2(nx*strength,ny*strength),q,true);
+      }
+    });
+  }
+  function otterContact(p, fixture) {
+    const body = fixture.getBody(), data = fixture.getUserData();
+    return body !== p.bodies[0] && body.isActive() && !body.__gone &&
+      data && (data.part || data.stroke) && !data.part?.st.gone;
+  }
+  PARTS.otterNuke = {
+    build(sim, p, d) {
+      const b = statBody(sim,d.x,d.y), r = d.r || .55;
+      p.r = r; p.bodies.push(b);
+      p.sensor = b.createFixture(new Circle(r), {isSensor:true,userData:ud(p,'sensor',{
+        onTouch(world,other,sign) { if (sign > 0 && otterContact(p,other)) detonateOtter(world,p); }
+      })});
+    },
+    update(sim, p) {
+      if (p.st.exploded) return;
+      // Static drawings/objects don't generate static-to-static contact callbacks.
+      // Query actual shapes too so touching with a fixed crayon also detonates it.
+      const d=p.def, b=p.bodies[0], r=p.r+.02; let touched=false;
+      sim.world.queryAABB(new pl.AABB(Vec2(d.x-r,d.y-r),Vec2(d.x+r,d.y+r)),fixture=>{
+        if (!otterContact(p,fixture)) return true;
+        const shape=fixture.getShape();
+        for (let i=0;i<shape.getChildCount();i++) {
+          if (pl.testOverlap(p.sensor.getShape(),0,shape,i,b.getTransform(),fixture.getBody().getTransform())) {
+            touched=true; return false;
+          }
+        }
+        return true;
+      });
+      if(touched)detonateOtter(sim,p);
+    }
+  };
+
   /* Lamp: sits on a surface at (x, y); switches on when triggered. */
   PARTS.lamp = {
     build(sim, p, d) {

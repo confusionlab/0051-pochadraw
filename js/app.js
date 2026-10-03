@@ -2,7 +2,7 @@
 (async function () {
   'use strict';
   const CC = window.CC;
-  await Promise.all([CC.Cloud?.ready, CC.Pochaco.ready]);
+  await Promise.all([CC.Cloud?.ready, CC.Pochaco.ready, CC.OtterNuke.ready]);
   const { Sim, geom, LEVELS, WORLDS, PAL, Crayon, Draw, Audio } = CC;
   const { DT } = CC.K;
   const campaignCount = LEVELS.length;
@@ -473,6 +473,7 @@
         case 'click': Audio.play('click'); fxText('click!', e.x + 0.2, e.y - 0.75, PAL.graphite, 30); break;
         case 'boing': Audio.play('boing'); fxText('boing!', e.x + 0.3, e.y - 0.9, PAL.blue, 30, 800); break;
         case 'boom': Audio.play('boom'); fxText('BOOM!', e.x - 0.3, e.y - 0.6, PAL.darkred, 44, 800); break;
+        case 'explosion': Audio.play('boom'); fxText('BOOM!', e.x, e.y - .8, PAL.darkred, 56, 900); break;
         case 'creak': Audio.play('creak'); break;
         case 'whir': Audio.fan(true); fxText('whirr', e.x + 0.6, e.y - 0.7, PAL.navy, 28); break;
         case 'windup': Audio.play('windup'); fxText('zzzip!', e.x, e.y - 1.0, PAL.darkred, 30); break;

@@ -75,6 +75,60 @@ test('tool box button activates the matching gate and goal lamp', () => {
   assert.equal(sim.parts[3].st.on,true);
   assert.equal(sim.won,true);
 });
+test('Otter Nuke waits for contact, explodes once, disappears and resets on replay', () => {
+  const level=Kit.blank();level.parts=[
+    {type:'otterNuke',x:8,y:5,r:.55,force:14},
+    {type:'ball',x:8,y:1,style:'rubber',hold:'start'},
+    {type:'crate',x:5,y:4,w:.8,h:.8}
+  ];
+  const sim=new Sim(Kit.validate(level),[]),nuke=sim.parts[0];
+  sim.step();assert.equal(nuke.st.exploded,undefined);
+  sim.start();sim.step();assert.equal(nuke.st.exploded,undefined);
+  for(let i=0;i<160&&!nuke.st.exploded;i++)sim.step();
+  assert.equal(nuke.st.exploded,true);assert.equal(nuke.st.gone,true);assert.equal(nuke.bodies.length,0);
+  assert.ok(sim.parts[2].bodies[0].getLinearVelocity().x<0);
+  assert.equal(sim.lost,0);assert.equal(sim.won,false);
+  for(let i=0;i<80;i++)sim.step();
+  assert.equal(sim.events.filter(e=>e.name==='explosion').length,1);
+  assert.equal(level.parts[0].force,14);assert.equal(level.parts[0].gone,undefined);
+  const replay=new Sim(level,[]);assert.equal(replay.parts[0].st.exploded,undefined);assert.equal(replay.parts[0].bodies.length,1);
+});
+test('Otter Nuke pushes in every direction, wakes sleeping objects and scales with Explosion force', () => {
+  const run=force=>{
+    const level=Kit.blank();level.parts=[{type:'otterNuke',x:8,y:4,force},
+      ...[[8,3.5],[6,4],[10,4],[8,2],[8,6]].map(([x,y])=>({type:'ball',x,y,style:'rubber'})),
+      {type:'block',x:13,y:7,w:1,h:1}];
+    const sim=new Sim(Kit.validate(level),[]);sim.parts[2].bodies[0].setAwake(false);
+    sim.start();sim.step();return sim;
+  };
+  const small=run(10),big=run(20),vel=sim=>sim.parts.slice(1,6).map(p=>p.bodies[0].getLinearVelocity());
+  const v=vel(small);assert.ok(v[1].x<0);assert.ok(v[2].x>0);assert.ok(v[3].y<0);assert.ok(v[4].y>0);
+  assert.equal(small.parts[2].bodies[0].isAwake(),true);
+  assert.ok(Math.abs(vel(big)[2].x/v[2].x-2)<.001);
+  assert.equal(small.parts[6].bodies[0].isStatic(),true);assert.equal(small.parts[6].bodies[0].getPosition().x,13.5);
+});
+test('Otter Nuke also detects fixed/dynamic drawings and overlapping objects safely', () => {
+  for(const kind of ['solid','loose','hinge','bouncy']) {
+    const level=Kit.blank();level.parts=[{type:'otterNuke',x:8,y:4,force:12}];
+    const sim=new Sim(Kit.validate(level),[{kind,pts:[[7.7,4],[8.3,4]]}]);
+    sim.start();sim.step();assert.equal(sim.parts[0].st.exploded,true,kind);
+    const v=sim.strokes[0].body.getLinearVelocity();assert.ok(Number.isFinite(v.x)&&Number.isFinite(v.y),kind);
+  }
+  const level=Kit.blank();level.parts=[{type:'otterNuke',x:8,y:4,force:0},{type:'block',x:7.8,y:3.8,w:.4,h:.4}];
+  const sim=new Sim(Kit.validate(level),[]);sim.start();sim.step();assert.equal(sim.parts[0].st.exploded,true);
+});
+test('Otter Nuke retains editable force and size through move, remix and sharing', () => {
+  const def=CC.EditorTools.find(t=>t[0]==='otterNuke')[3]([8,4]);
+  const level=Kit.blank();level.parts=[def];def.force=32;def.r=.8;
+  const restored=Kit.decode(Kit.encode(Kit.remix(level)));Kit.move(restored.parts[0],1,-1);
+  assert.equal(restored.parts[0].force,32);
+  assert.equal(JSON.stringify(Kit.bounds(restored.parts[0])),'[8.2,2.2,9.8,3.8]');
+  for(const force of [-1,101,'strong',null]) {
+    const bad=Kit.clone(level);bad.parts[0].force=force;
+    if(force===null)assert.doesNotThrow(()=>Kit.validate(bad));else assert.throws(()=>Kit.validate(bad),/Explosion force/);
+  }
+  const bad=Kit.clone(level);delete bad.parts[0].x;assert.throws(()=>Kit.validate(bad),/position/);
+});
 test('new object selection bounds follow visible machinery and drop positions', () => {
   assert.equal(JSON.stringify(Kit.bounds({type:'conveyor',x1:1,x2:4,y:3})),'[1,2.95,4,3.35]');
   assert.equal(JSON.stringify(Kit.bounds({type:'dispenser',kind:'hen',x1:2,x2:6,y:3})),'[1.5,2.25,2.5,3.1]');
